@@ -1,0 +1,860 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aski Art — Sequence Diagrams</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --bg:#1a1a2e;--surface:#2a2a3e;--surface2:#33335a;--border:#444470;
+  --accent:#f0a500;--accent2:#ffc845;--text:#e8e8f0;--text2:#a0a0b8;
+  --danger:#ff4466;--success:#44cc88;
+}
+html,body{height:100%;overflow:hidden;font-family:'Inter','SF Pro Display',-apple-system,system-ui,sans-serif;background:var(--bg);color:var(--text);}
+
+/* Header */
+#header{height:48px;background:rgba(26,26,46,0.95);backdrop-filter:blur(12px);border-bottom:1px solid rgba(68,68,112,0.4);display:flex;align-items:center;padding:0 16px;gap:12px;z-index:100;position:relative;}
+#header h1{font-size:14px;font-weight:600;letter-spacing:.3px;color:var(--accent);white-space:nowrap;}
+#header .sep{width:1px;height:24px;background:rgba(68,68,112,0.5);}
+.hdr-btn{padding:5px 12px;font-size:11px;font-weight:500;border:1px solid var(--border);background:var(--surface);color:var(--text);border-radius:6px;cursor:pointer;transition:all .15s;white-space:nowrap;}
+.hdr-btn:hover{border-color:var(--accent);background:rgba(240,165,0,0.12);color:var(--accent2);}
+.hdr-btn.primary{background:rgba(240,165,0,0.18);border-color:var(--accent);color:var(--accent);}
+.hdr-btn.primary:hover{background:rgba(240,165,0,0.3);}
+#header select{background:var(--surface);border:1px solid var(--border);color:var(--text);padding:5px 8px;border-radius:6px;font-size:11px;cursor:pointer;outline:none;}
+#header select:hover{border-color:var(--accent);}
+#header .spacer{flex:1;}
+#toast{position:fixed;top:60px;right:16px;background:var(--success);color:#000;padding:8px 16px;border-radius:6px;font-size:12px;font-weight:600;opacity:0;pointer-events:none;transition:opacity .3s;z-index:999;}
+#toast.show{opacity:1;}
+
+/* Actor Bar */
+#actor-bar{height:44px;background:rgba(42,42,62,0.6);border-bottom:1px solid rgba(68,68,112,0.3);display:flex;align-items:center;padding:0 16px;gap:8px;overflow-x:auto;}
+#actor-bar .actor-chip{display:flex;align-items:center;gap:4px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:3px 6px 3px 10px;font-size:12px;cursor:grab;user-select:none;transition:all .15s;white-space:nowrap;}
+#actor-bar .actor-chip:hover{border-color:var(--accent);}
+#actor-bar .actor-chip.dragging{opacity:0.4;}
+#actor-bar .actor-chip.drag-over{border-color:var(--accent);box-shadow:0 0 0 2px rgba(240,165,0,0.25);}
+#actor-bar .actor-chip input{background:transparent;border:none;color:var(--text);font-size:12px;width:80px;outline:none;font-family:inherit;}
+#actor-bar .actor-chip .remove-actor{width:20px;height:20px;border:none;background:transparent;color:var(--text2);cursor:pointer;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:14px;line-height:1;}
+#actor-bar .actor-chip .remove-actor:hover{background:rgba(255,68,102,0.2);color:var(--danger);}
+#add-actor-btn{padding:3px 10px;font-size:11px;border:1px dashed var(--border);background:transparent;color:var(--text2);border-radius:6px;cursor:pointer;transition:all .15s;white-space:nowrap;}
+#add-actor-btn:hover{border-color:var(--accent);color:var(--accent);}
+
+/* Main Layout */
+#main{display:flex;height:calc(100% - 92px);overflow:hidden;}
+
+/* Message Editor */
+#editor-pane{width:420px;min-width:320px;max-width:600px;border-right:1px solid rgba(68,68,112,0.3);display:flex;flex-direction:column;background:rgba(26,26,46,0.4);}
+#editor-header{padding:10px 14px;border-bottom:1px solid rgba(68,68,112,0.2);display:flex;align-items:center;gap:8px;}
+#editor-header h3{font-size:12px;font-weight:600;color:var(--text2);letter-spacing:.4px;text-transform:uppercase;}
+#editor-header .spacer{flex:1;}
+.small-btn{padding:4px 10px;font-size:11px;border:1px solid var(--border);background:var(--surface);color:var(--text);border-radius:5px;cursor:pointer;transition:all .15s;}
+.small-btn:hover{border-color:var(--accent);color:var(--accent2);}
+#message-list{flex:1;overflow-y:auto;padding:8px;}
+#message-list::-webkit-scrollbar{width:6px;}
+#message-list::-webkit-scrollbar-track{background:transparent;}
+#message-list::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
+
+.msg-row{display:flex;align-items:center;gap:6px;padding:6px 8px;background:var(--surface);border:1px solid transparent;border-radius:8px;margin-bottom:4px;cursor:grab;transition:all .15s;position:relative;}
+.msg-row:hover{border-color:rgba(68,68,112,0.5);}
+.msg-row.dragging{opacity:0.4;}
+.msg-row.drag-over{border-color:var(--accent);box-shadow:0 0 0 2px rgba(240,165,0,0.15);}
+.msg-row .drag-handle{color:var(--text2);font-size:10px;cursor:grab;padding:0 2px;user-select:none;flex-shrink:0;}
+.msg-row select{background:var(--surface2);border:1px solid rgba(68,68,112,0.4);color:var(--text);padding:3px 4px;border-radius:4px;font-size:11px;outline:none;cursor:pointer;min-width:0;}
+.msg-row select:focus{border-color:var(--accent);}
+.msg-row .msg-label{flex:1;background:var(--surface2);border:1px solid rgba(68,68,112,0.4);color:var(--text);padding:3px 6px;border-radius:4px;font-size:11px;outline:none;font-family:inherit;min-width:60px;}
+.msg-row .msg-label:focus{border-color:var(--accent);}
+.msg-row .del-msg{width:22px;height:22px;border:none;background:transparent;color:var(--text2);cursor:pointer;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;}
+.msg-row .del-msg:hover{background:rgba(255,68,102,0.2);color:var(--danger);}
+
+.msg-row.note-row{border-left:3px solid var(--accent);}
+.msg-row.group-start-row{border-left:3px solid #66aaff;}
+.msg-row.group-end-row{border-left:3px solid #66aaff;opacity:0.7;}
+.msg-row .type-indicator{font-size:10px;color:var(--text2);width:16px;text-align:center;flex-shrink:0;}
+
+/* Preview */
+#preview-pane{flex:1;display:flex;flex-direction:column;background:rgba(0,0,0,0.15);}
+#preview-header{padding:10px 14px;border-bottom:1px solid rgba(68,68,112,0.2);display:flex;align-items:center;gap:8px;}
+#preview-header h3{font-size:12px;font-weight:600;color:var(--text2);letter-spacing:.4px;text-transform:uppercase;}
+#preview-header .spacer{flex:1;}
+#preview-output{flex:1;overflow:auto;padding:16px;font-family:'SF Mono','Fira Code','Cascadia Code','Consolas',monospace;font-size:13px;line-height:1.5;white-space:pre;color:var(--text);tab-size:4;user-select:all;}
+#preview-output::-webkit-scrollbar{width:6px;height:6px;}
+#preview-output::-webkit-scrollbar-track{background:transparent;}
+#preview-output::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
+
+/* Resize handle */
+#resize-handle{width:5px;cursor:col-resize;background:transparent;transition:background .15s;flex-shrink:0;}
+#resize-handle:hover,#resize-handle.active{background:var(--accent);}
+
+/* Width control */
+.width-ctl{display:flex;align-items:center;gap:4px;}
+.width-ctl label{font-size:11px;color:var(--text2);}
+.width-ctl select{background:var(--surface);border:1px solid var(--border);color:var(--text);padding:2px 6px;border-radius:4px;font-size:11px;outline:none;cursor:pointer;}
+</style>
+</head>
+<body>
+<a href="index.html" style="position:fixed;top:12px;left:16px;z-index:99999;color:#888;text-decoration:none;font-family:monospace;font-size:14px;padding:4px 10px;border-radius:6px;background:rgba(255,255,255,0.05);transition:all 0.2s" onmouseover="this.style.color='#fff';this.style.background='rgba(255,255,255,0.12)'" onmouseout="this.style.color='#888';this.style.background='rgba(255,255,255,0.05)'">← Aski Art</a>
+
+<div id="header">
+  <h1>Aski Art — Sequence Diagrams</h1>
+  <div class="sep"></div>
+  <span style="font-size:11px;color:var(--text2);">Template:</span>
+  <select id="template-select">
+    <option value="">— Select —</option>
+    <option value="http">HTTP Request</option>
+    <option value="auth">Auth Flow</option>
+    <option value="pubsub">Pub/Sub</option>
+    <option value="micro">Microservices</option>
+  </select>
+  <div class="spacer"></div>
+  <div class="width-ctl">
+    <label>Col width:</label>
+    <select id="col-width-ctl">
+      <option value="auto">Auto</option>
+      <option value="16">16</option>
+      <option value="20">20</option>
+      <option value="24">24</option>
+      <option value="28">28</option>
+      <option value="32">32</option>
+    </select>
+  </div>
+  <div class="sep"></div>
+  <button class="hdr-btn primary" id="btn-copy">Copy ASCII</button>
+</div>
+
+<div id="actor-bar">
+  <button id="add-actor-btn">+ Actor</button>
+</div>
+
+<div id="toast"></div>
+
+<div id="main">
+  <div id="editor-pane">
+    <div id="editor-header">
+      <h3>Messages</h3>
+      <div class="spacer"></div>
+      <button class="small-btn" id="btn-add-msg">+ Message</button>
+      <button class="small-btn" id="btn-add-note">+ Note</button>
+      <button class="small-btn" id="btn-add-group">+ Group</button>
+    </div>
+    <div id="message-list"></div>
+  </div>
+  <div id="resize-handle"></div>
+  <div id="preview-pane">
+    <div id="preview-header">
+      <h3>Preview</h3>
+      <div class="spacer"></div>
+    </div>
+    <div id="preview-output"></div>
+  </div>
+</div>
+
+<script>
+// ── State ──
+let actors = [];
+let messages = [];
+let nextActorId = 1;
+let nextMsgId = 1;
+
+// ── DOM refs ──
+const actorBar = document.getElementById('actor-bar');
+const addActorBtn = document.getElementById('add-actor-btn');
+const messageList = document.getElementById('message-list');
+const previewOutput = document.getElementById('preview-output');
+const templateSelect = document.getElementById('template-select');
+const colWidthCtl = document.getElementById('col-width-ctl');
+const btnCopy = document.getElementById('btn-copy');
+const btnAddMsg = document.getElementById('btn-add-msg');
+const btnAddNote = document.getElementById('btn-add-note');
+const btnAddGroup = document.getElementById('btn-add-group');
+const toast = document.getElementById('toast');
+
+// ── Helpers ──
+function showToast(msg) {
+  toast.textContent = msg;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 1500);
+}
+
+function addActor(name) {
+  const id = 'a' + (nextActorId++);
+  actors.push({ id, name: name || 'Actor' });
+  renderActors();
+  renderMessages();
+  render();
+  return id;
+}
+
+function removeActor(id) {
+  actors = actors.filter(a => a.id !== id);
+  messages = messages.filter(m => {
+    if (m.type === 'note') return m.actor !== id;
+    if (m.type === 'group-start' || m.type === 'group-end') return true;
+    return true;
+  });
+  renderActors();
+  renderMessages();
+  render();
+}
+
+function addMessage(from, to, label, arrowType) {
+  const id = 'm' + (nextMsgId++);
+  messages.push({ id, type: 'message', from, to, label: label || '', arrowType: arrowType || 'solid' });
+  renderMessages();
+  render();
+}
+
+function addNote(actorId, text) {
+  const id = 'm' + (nextMsgId++);
+  messages.push({ id, type: 'note', actor: actorId || (actors[0]?.id || ''), text: text || 'Note' });
+  renderMessages();
+  render();
+}
+
+function addGroup(label) {
+  const startId = 'm' + (nextMsgId++);
+  const endId = 'm' + (nextMsgId++);
+  const gid = 'g' + Date.now();
+  messages.push({ id: startId, type: 'group-start', label: label || 'loop', groupId: gid });
+  messages.push({ id: endId, type: 'group-end', groupId: gid });
+  renderMessages();
+  render();
+}
+
+function removeMessage(id) {
+  const msg = messages.find(m => m.id === id);
+  if (msg && (msg.type === 'group-start' || msg.type === 'group-end')) {
+    messages = messages.filter(m => m.groupId !== msg.groupId);
+  } else {
+    messages = messages.filter(m => m.id !== id);
+  }
+  renderMessages();
+  render();
+}
+
+// ── Actor Bar Rendering ──
+function renderActors() {
+  const chips = actorBar.querySelectorAll('.actor-chip');
+  chips.forEach(c => c.remove());
+
+  actors.forEach((actor, idx) => {
+    const chip = document.createElement('div');
+    chip.className = 'actor-chip';
+    chip.draggable = true;
+    chip.dataset.actorIdx = idx;
+
+    const inp = document.createElement('input');
+    inp.value = actor.name;
+    inp.addEventListener('input', () => { actor.name = inp.value; render(); });
+    inp.addEventListener('keydown', e => { if (e.key === 'Enter') inp.blur(); });
+
+    const rm = document.createElement('button');
+    rm.className = 'remove-actor';
+    rm.innerHTML = '×';
+    rm.title = 'Remove actor';
+    rm.addEventListener('click', () => removeActor(actor.id));
+
+    chip.appendChild(inp);
+    chip.appendChild(rm);
+
+    // Drag
+    chip.addEventListener('dragstart', e => {
+      chip.classList.add('dragging');
+      e.dataTransfer.setData('text/plain', idx.toString());
+      e.dataTransfer.effectAllowed = 'move';
+    });
+    chip.addEventListener('dragend', () => chip.classList.remove('dragging'));
+    chip.addEventListener('dragover', e => { e.preventDefault(); chip.classList.add('drag-over'); });
+    chip.addEventListener('dragleave', () => chip.classList.remove('drag-over'));
+    chip.addEventListener('drop', e => {
+      e.preventDefault();
+      chip.classList.remove('drag-over');
+      const fromIdx = parseInt(e.dataTransfer.getData('text/plain'));
+      const toIdx = idx;
+      if (fromIdx !== toIdx) {
+        const [moved] = actors.splice(fromIdx, 1);
+        actors.splice(toIdx, 0, moved);
+        renderActors();
+        renderMessages();
+        render();
+      }
+    });
+
+    actorBar.insertBefore(chip, addActorBtn);
+  });
+}
+
+// ── Message List Rendering ──
+function renderMessages() {
+  messageList.innerHTML = '';
+  messages.forEach((msg, idx) => {
+    const row = document.createElement('div');
+    row.className = 'msg-row';
+    row.draggable = true;
+    row.dataset.msgIdx = idx;
+
+    const handle = document.createElement('span');
+    handle.className = 'drag-handle';
+    handle.textContent = '⋮⋮';
+    row.appendChild(handle);
+
+    if (msg.type === 'message') {
+      const fromSel = makeActorSelect(msg.from, v => { msg.from = v; render(); });
+      const arrowInd = document.createElement('span');
+      arrowInd.className = 'type-indicator';
+      arrowInd.title = 'Click to toggle arrow type';
+      arrowInd.style.cursor = 'pointer';
+      updateArrowIndicator(arrowInd, msg);
+      arrowInd.addEventListener('click', () => {
+        const types = ['solid', 'dashed', 'self'];
+        const ci = types.indexOf(msg.arrowType);
+        msg.arrowType = types[(ci + 1) % types.length];
+        if (msg.arrowType === 'self') msg.to = msg.from;
+        updateArrowIndicator(arrowInd, msg);
+        render();
+      });
+
+      const toSel = makeActorSelect(msg.to, v => { msg.to = v; render(); });
+      if (msg.arrowType === 'self') toSel.style.display = 'none';
+
+      const label = document.createElement('input');
+      label.className = 'msg-label';
+      label.value = msg.label;
+      label.placeholder = 'message...';
+      label.addEventListener('input', () => { msg.label = label.value; render(); });
+
+      const typeSel = document.createElement('select');
+      typeSel.title = 'Arrow type';
+      ['solid', 'dashed', 'self'].forEach(t => {
+        const o = document.createElement('option');
+        o.value = t;
+        o.textContent = t === 'solid' ? '───>' : t === 'dashed' ? '- ->' : '↺';
+        if (t === msg.arrowType) o.selected = true;
+        typeSel.appendChild(o);
+      });
+      typeSel.addEventListener('change', () => {
+        msg.arrowType = typeSel.value;
+        if (msg.arrowType === 'self') { msg.to = msg.from; toSel.style.display = 'none'; }
+        else { toSel.style.display = ''; }
+        updateArrowIndicator(arrowInd, msg);
+        render();
+      });
+
+      row.appendChild(fromSel);
+      row.appendChild(arrowInd);
+      row.appendChild(toSel);
+      row.appendChild(label);
+      row.appendChild(typeSel);
+    } else if (msg.type === 'note') {
+      row.classList.add('note-row');
+      const badge = document.createElement('span');
+      badge.className = 'type-indicator';
+      badge.textContent = '📋';
+      badge.style.fontSize = '12px';
+      row.appendChild(badge);
+
+      const actSel = makeActorSelect(msg.actor, v => { msg.actor = v; render(); });
+      row.appendChild(actSel);
+
+      const label = document.createElement('input');
+      label.className = 'msg-label';
+      label.value = msg.text;
+      label.placeholder = 'note text...';
+      label.addEventListener('input', () => { msg.text = label.value; render(); });
+      row.appendChild(label);
+    } else if (msg.type === 'group-start') {
+      row.classList.add('group-start-row');
+      const badge = document.createElement('span');
+      badge.className = 'type-indicator';
+      badge.textContent = '┌';
+      badge.style.color = '#66aaff';
+      row.appendChild(badge);
+
+      const label = document.createElement('input');
+      label.className = 'msg-label';
+      label.value = msg.label;
+      label.placeholder = 'group label (loop, alt, opt...)';
+      label.addEventListener('input', () => { msg.label = label.value; render(); });
+      row.appendChild(label);
+
+      const hint = document.createElement('span');
+      hint.style.fontSize = '10px';
+      hint.style.color = 'var(--text2)';
+      hint.textContent = 'START';
+      row.appendChild(hint);
+    } else if (msg.type === 'group-end') {
+      row.classList.add('group-end-row');
+      const badge = document.createElement('span');
+      badge.className = 'type-indicator';
+      badge.textContent = '└';
+      badge.style.color = '#66aaff';
+      row.appendChild(badge);
+
+      const hint = document.createElement('span');
+      hint.style.fontSize = '10px';
+      hint.style.color = 'var(--text2)';
+      hint.textContent = 'END GROUP';
+      row.appendChild(hint);
+    }
+
+    const del = document.createElement('button');
+    del.className = 'del-msg';
+    del.innerHTML = '×';
+    del.title = 'Remove';
+    del.addEventListener('click', () => removeMessage(msg.id));
+    row.appendChild(del);
+
+    // Drag reorder
+    row.addEventListener('dragstart', e => {
+      row.classList.add('dragging');
+      e.dataTransfer.setData('text/plain', idx.toString());
+      e.dataTransfer.effectAllowed = 'move';
+    });
+    row.addEventListener('dragend', () => row.classList.remove('dragging'));
+    row.addEventListener('dragover', e => { e.preventDefault(); row.classList.add('drag-over'); });
+    row.addEventListener('dragleave', () => row.classList.remove('drag-over'));
+    row.addEventListener('drop', e => {
+      e.preventDefault();
+      row.classList.remove('drag-over');
+      const fromIdx = parseInt(e.dataTransfer.getData('text/plain'));
+      const toIdx = idx;
+      if (fromIdx !== toIdx) {
+        const [moved] = messages.splice(fromIdx, 1);
+        messages.splice(toIdx, 0, moved);
+        renderMessages();
+        render();
+      }
+    });
+
+    // Delete key
+    row.tabIndex = 0;
+    row.addEventListener('keydown', e => {
+      if (e.key === 'Delete' || (e.key === 'Backspace' && !e.target.matches('input,select'))) {
+        removeMessage(msg.id);
+      }
+    });
+
+    messageList.appendChild(row);
+  });
+}
+
+function makeActorSelect(currentId, onChange) {
+  const sel = document.createElement('select');
+  actors.forEach(a => {
+    const o = document.createElement('option');
+    o.value = a.id;
+    o.textContent = a.name;
+    if (a.id === currentId) o.selected = true;
+    sel.appendChild(o);
+  });
+  sel.addEventListener('change', () => onChange(sel.value));
+  return sel;
+}
+
+function updateArrowIndicator(el, msg) {
+  if (msg.arrowType === 'solid') el.textContent = '→';
+  else if (msg.arrowType === 'dashed') el.textContent = '⇢';
+  else el.textContent = '↺';
+}
+
+// ── ASCII Renderer ──
+function render() {
+  const fixedW = colWidthCtl.value;
+  const ascii = generateASCII(fixedW === 'auto' ? null : parseInt(fixedW));
+  previewOutput.textContent = ascii;
+}
+
+function generateASCII(fixedColWidth) {
+  if (actors.length === 0) return '  (add actors to begin)';
+
+  const actorNames = actors.map(a => a.name);
+  const n = actorNames.length;
+
+  // Calculate column widths
+  let colWidths = [];
+  if (fixedColWidth) {
+    colWidths = actors.map(() => fixedColWidth);
+  } else {
+    // Base width from actor names
+    colWidths = actorNames.map(name => Math.max(name.length + 4, 12));
+
+    // Widen for message labels
+    messages.forEach(msg => {
+      if (msg.type !== 'message') return;
+      const fi = actors.findIndex(a => a.id === msg.from);
+      const ti = actors.findIndex(a => a.id === msg.to);
+      if (fi < 0 || ti < 0) return;
+      if (fi === ti) return; // self-call doesn't widen
+      const lo = Math.min(fi, ti);
+      const hi = Math.max(fi, ti);
+      const spanCols = hi - lo;
+      const labelLen = msg.label.length + 4; // padding
+      const needed = Math.ceil(labelLen / spanCols);
+      for (let c = lo; c < hi; c++) {
+        colWidths[c] = Math.max(colWidths[c], needed);
+      }
+    });
+
+    // Widen for note text
+    messages.forEach(msg => {
+      if (msg.type !== 'note') return;
+      const ai = actors.findIndex(a => a.id === msg.actor);
+      if (ai < 0) return;
+      const noteW = msg.text.length + 6;
+      // place note to the right if possible
+      if (ai < n - 1) {
+        colWidths[ai] = Math.max(colWidths[ai], noteW);
+      } else if (ai > 0) {
+        colWidths[ai - 1] = Math.max(colWidths[ai - 1], noteW);
+      } else {
+        colWidths[ai] = Math.max(colWidths[ai], noteW);
+      }
+    });
+  }
+
+  // Compute actor center positions
+  const leftPad = 2;
+  let positions = [];
+  let x = leftPad;
+  for (let i = 0; i < n; i++) {
+    const nameHalf = Math.floor(actorNames[i].length / 2);
+    if (i === 0) {
+      positions.push(x + nameHalf);
+    } else {
+      positions.push(positions[i - 1] + colWidths[i - 1]);
+    }
+  }
+
+  const totalWidth = (positions[n - 1] || 0) + Math.floor(actorNames[n - 1].length / 2) + 4;
+  const lines = [];
+
+  function pad(len) { return ' '.repeat(Math.max(0, len)); }
+
+  function makeBlankLine() {
+    const maxPos = positions[n - 1] + 1;
+    let chars = new Array(maxPos + 1).fill(' ');
+    for (let i = 0; i < n; i++) {
+      chars[positions[i]] = '|';
+    }
+    return chars.join('');
+  }
+
+  function setChar(str, idx, ch) {
+    if (idx < 0) return str;
+    while (str.length <= idx) str += ' ';
+    return str.substring(0, idx) + ch + str.substring(idx + 1);
+  }
+
+  function setStr(str, idx, s) {
+    if (idx < 0) idx = 0;
+    while (str.length < idx + s.length) str += ' ';
+    return str.substring(0, idx) + s + str.substring(idx + s.length);
+  }
+
+  // Actor header line
+  let headerLine = '';
+  for (let i = 0; i < n; i++) {
+    const name = actorNames[i];
+    const center = positions[i];
+    const start = center - Math.floor(name.length / 2);
+    headerLine = setStr(headerLine, start, name);
+  }
+  lines.push(headerLine);
+
+  // Lifeline start
+  lines.push(makeBlankLine());
+
+  // Render each message
+  let activeGroups = [];
+
+  for (let mi = 0; mi < messages.length; mi++) {
+    const msg = messages[mi];
+
+    if (msg.type === 'group-start') {
+      activeGroups.push(msg);
+      // Draw group start line
+      let gLine = makeBlankLine();
+      const leftMost = positions[0] - 2;
+      const rightMost = positions[n - 1] + 2;
+      // top border
+      let topLine = '';
+      for (let c = 0; c <= rightMost + 2; c++) topLine += ' ';
+      const boxL = leftMost - 1;
+      const boxR = rightMost + 2;
+      topLine = setChar(topLine, boxL, '+');
+      for (let c = boxL + 1; c < boxR; c++) {
+        const isLifeline = positions.includes(c);
+        topLine = setChar(topLine, c, isLifeline ? '|' : '-');
+      }
+      topLine = setChar(topLine, boxR, '+');
+      lines.push(topLine);
+
+      // label line
+      let labelLine = makeBlankLine();
+      labelLine = setChar(labelLine, boxL, '|');
+      labelLine = setChar(labelLine, boxR, '|');
+      const tag = ' ' + msg.label + ' ';
+      labelLine = setStr(labelLine, boxL + 1, '[' + msg.label + ']');
+      lines.push(labelLine);
+      continue;
+    }
+
+    if (msg.type === 'group-end') {
+      activeGroups.pop();
+      const leftMost = positions[0] - 2;
+      const rightMost = positions[n - 1] + 2;
+      const boxL = leftMost - 1;
+      const boxR = rightMost + 2;
+      let botLine = '';
+      for (let c = 0; c <= boxR + 1; c++) botLine += ' ';
+      botLine = setChar(botLine, boxL, '+');
+      for (let c = boxL + 1; c < boxR; c++) {
+        const isLifeline = positions.includes(c);
+        botLine = setChar(botLine, c, isLifeline ? '|' : '-');
+      }
+      botLine = setChar(botLine, boxR, '+');
+      lines.push(botLine);
+      lines.push(makeBlankLine());
+      continue;
+    }
+
+    if (msg.type === 'note') {
+      const ai = actors.findIndex(a => a.id === msg.actor);
+      if (ai < 0) continue;
+      const center = positions[ai];
+      const text = msg.text;
+      const boxW = text.length + 4;
+
+      // Place note to the right of the lifeline if possible
+      let noteStart;
+      if (ai < n - 1) {
+        noteStart = center + 2;
+      } else {
+        noteStart = center - boxW - 1;
+      }
+      if (noteStart < 0) noteStart = center + 2;
+
+      // top
+      let tl = makeBlankLine();
+      tl = setStr(tl, noteStart, '\u250c' + '\u2500'.repeat(boxW - 2) + '\u2510');
+      lines.push(tl);
+      // content
+      let cl = makeBlankLine();
+      cl = setStr(cl, noteStart, '\u2502 ' + text + ' \u2502');
+      lines.push(cl);
+      // bottom
+      let bl = makeBlankLine();
+      bl = setStr(bl, noteStart, '\u2514' + '\u2500'.repeat(boxW - 2) + '\u2518');
+      lines.push(bl);
+      lines.push(makeBlankLine());
+      continue;
+    }
+
+    // Regular message
+    const fi = actors.findIndex(a => a.id === msg.from);
+    const ti = actors.findIndex(a => a.id === msg.to);
+    if (fi < 0 || ti < 0) continue;
+
+    if (msg.arrowType === 'self' || fi === ti) {
+      // Self-call: loop to the right
+      const center = positions[fi];
+      const label = msg.label;
+      // Line 1: outgoing arm to the right with label
+      let l1 = makeBlankLine();
+      l1 = setStr(l1, center + 1, '\u2500\u2500\u2510');
+      if (label) l1 = setStr(l1, center + 5, ' ' + label);
+      lines.push(l1);
+      // Line 2: vertical connector
+      let lm = makeBlankLine();
+      lm = setChar(lm, center + 3, '\u2502');
+      lines.push(lm);
+      // Line 3: return arm pointing left
+      let l2 = makeBlankLine();
+      l2 = setStr(l2, center, '<\u2500\u2500\u2518');
+      lines.push(l2);
+      lines.push(makeBlankLine());
+      continue;
+    }
+
+    const fromPos = positions[fi];
+    const toPos = positions[ti];
+    const leftToRight = fi < ti;
+    const aStart = leftToRight ? fromPos + 1 : toPos + 1;
+    const aEnd = leftToRight ? toPos - 1 : fromPos - 1;
+    const arrowLen = aEnd - aStart + 1;
+
+    if (arrowLen < 2) {
+      lines.push(makeBlankLine());
+      continue;
+    }
+
+    // Label line
+    const label = msg.label;
+    if (label) {
+      let labelLine = makeBlankLine();
+      const arrowMid = aStart + Math.floor(arrowLen / 2);
+      const labelStart = arrowMid - Math.floor(label.length / 2);
+      labelLine = setStr(labelLine, Math.max(aStart, labelStart), label);
+      lines.push(labelLine);
+    }
+
+    // Arrow line
+    let arrowLine = makeBlankLine();
+    const isDashed = msg.arrowType === 'dashed';
+
+    if (leftToRight) {
+      // ────────> or - - - - ->
+      let arrow = '';
+      if (isDashed) {
+        for (let i = 0; i < arrowLen - 1; i++) {
+          arrow += (i % 2 === 0) ? '-' : ' ';
+        }
+        arrow += '>';
+      } else {
+        arrow = '\u2500'.repeat(arrowLen - 1) + '>';
+      }
+      arrowLine = setStr(arrowLine, aStart, arrow);
+    } else {
+      // <──────── or <- - - - -
+      let arrow = '';
+      if (isDashed) {
+        arrow = '<';
+        for (let i = 0; i < arrowLen - 1; i++) {
+          arrow += (i % 2 === 0) ? '-' : ' ';
+        }
+      } else {
+        arrow = '<' + '\u2500'.repeat(arrowLen - 1);
+      }
+      arrowLine = setStr(arrowLine, aStart, arrow);
+    }
+
+    // Re-draw lifelines that the arrow crosses
+    // (they are already in the blank line; the arrow overwrites them, which is fine for crossing lifelines)
+    lines.push(arrowLine);
+    lines.push(makeBlankLine());
+  }
+
+  // Final lifeline
+  lines.push(makeBlankLine());
+
+  // Trim trailing whitespace on each line
+  return lines.map(l => l.replace(/\s+$/, '')).join('\n');
+}
+
+// ── Resize handle ──
+(function() {
+  const handle = document.getElementById('resize-handle');
+  const editorPane = document.getElementById('editor-pane');
+  let startX, startW;
+  handle.addEventListener('mousedown', e => {
+    e.preventDefault();
+    startX = e.clientX;
+    startW = editorPane.offsetWidth;
+    handle.classList.add('active');
+    const onMove = e2 => {
+      const w = startW + (e2.clientX - startX);
+      editorPane.style.width = Math.max(280, Math.min(700, w)) + 'px';
+    };
+    const onUp = () => {
+      handle.classList.remove('active');
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
+    };
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+  });
+})();
+
+// ── Event Handlers ──
+addActorBtn.addEventListener('click', () => addActor('Actor' + nextActorId));
+btnAddMsg.addEventListener('click', () => {
+  if (actors.length < 2) { addActor('Client'); addActor('Server'); }
+  addMessage(actors[0].id, actors[actors.length > 1 ? 1 : 0].id, '');
+});
+btnAddNote.addEventListener('click', () => {
+  if (actors.length === 0) addActor('Actor1');
+  addNote(actors[0].id, 'Note');
+});
+btnAddGroup.addEventListener('click', () => addGroup('loop'));
+
+btnCopy.addEventListener('click', () => {
+  const text = previewOutput.textContent;
+  navigator.clipboard.writeText(text).then(() => showToast('Copied to clipboard!'));
+});
+
+colWidthCtl.addEventListener('change', render);
+
+// ── Templates ──
+templateSelect.addEventListener('change', () => {
+  const v = templateSelect.value;
+  if (!v) return;
+  actors = [];
+  messages = [];
+  nextActorId = 1;
+  nextMsgId = 1;
+
+  if (v === 'http') {
+    const c = addActor('Client');
+    const s = addActor('Server');
+    const d = addActor('Database');
+    addMessage(c, s, 'GET /users', 'solid');
+    addMessage(s, d, 'SELECT * FROM users', 'solid');
+    addMessage(d, s, 'rows[]', 'dashed');
+    addMessage(s, c, '200 OK', 'dashed');
+  } else if (v === 'auth') {
+    const u = addActor('User');
+    const a = addActor('App');
+    const au = addActor('Auth Service');
+    addMessage(u, a, 'Login request', 'solid');
+    addMessage(a, au, 'Validate credentials', 'solid');
+    addMessage(au, au, 'Check password hash', 'self');
+    addMessage(au, a, 'JWT token', 'dashed');
+    addMessage(a, u, 'Set session cookie', 'dashed');
+  } else if (v === 'pubsub') {
+    const p = addActor('Publisher');
+    const b = addActor('Broker');
+    const s1 = addActor('Subscriber1');
+    const s2 = addActor('Subscriber2');
+    addMessage(p, b, 'publish(event)', 'solid');
+    addMessage(b, s1, 'notify(event)', 'solid');
+    addMessage(b, s2, 'notify(event)', 'solid');
+    addMessage(s1, b, 'ack', 'dashed');
+    addMessage(s2, b, 'ack', 'dashed');
+  } else if (v === 'micro') {
+    const gw = addActor('API Gateway');
+    const sa = addActor('Service A');
+    const sb = addActor('Service B');
+    const ca = addActor('Cache');
+    addMessage(gw, sa, 'POST /orders', 'solid');
+    addMessage(sa, ca, 'cache.get(key)', 'solid');
+    addMessage(ca, sa, 'miss', 'dashed');
+    addMessage(sa, sb, 'getInventory()', 'solid');
+    addMessage(sb, sa, 'inventory[]', 'dashed');
+    addMessage(sa, ca, 'cache.set(key)', 'solid');
+    addMessage(sa, gw, '201 Created', 'dashed');
+  }
+
+  templateSelect.value = '';
+});
+
+// ── Keyboard ──
+document.addEventListener('keydown', e => {
+  if (e.target.matches('input,select,textarea')) return;
+  if (e.key === 'n' && !e.metaKey && !e.ctrlKey) {
+    e.preventDefault();
+    btnAddMsg.click();
+  }
+});
+
+// ── Initialize with HTTP template ──
+(function() {
+  const c = addActor('Client');
+  const s = addActor('Server');
+  const d = addActor('Database');
+  addMessage(c, s, 'GET /users', 'solid');
+  addMessage(s, d, 'SELECT *', 'solid');
+  addMessage(d, s, 'rows[]', 'dashed');
+  addMessage(s, c, '200 OK', 'dashed');
+})();
+</script>
+</body>
+</html>

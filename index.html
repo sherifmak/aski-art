@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aski Art — ASCII Art Tools for Developers</title>
+<!--
+  NOTE FOR TOOL PAGES:
+  Each tool page (flow.html, interface.html, sequence.html, wireframe.html, tables.html, image.html)
+  should include a back-link to this hub in the top-left corner:
+  <a href="index.html" style="position:fixed;top:12px;left:12px;z-index:999;color:#888;text-decoration:none;font-family:monospace;font-size:13px;">← Aski Art</a>
+-->
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --bg:#0a0a0f;
+  --surface:#12121a;
+  --surface2:#1a1a28;
+  --border:#252535;
+  --text:#e4e4ef;
+  --text2:#7a7a95;
+  --font-mono:'SF Mono','Fira Code','Cascadia Code','JetBrains Mono','Consolas',monospace;
+}
+html{scroll-behavior:smooth;}
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:var(--font-mono);
+  line-height:1.6;
+  overflow-x:hidden;
+  -webkit-font-smoothing:antialiased;
+}
+
+/* ---- Scanline overlay on hero ---- */
+.hero::before{
+  content:'';
+  position:absolute;
+  inset:0;
+  background:repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0,0,0,0.06) 2px,
+    rgba(0,0,0,0.06) 4px
+  );
+  pointer-events:none;
+  z-index:2;
+}
+
+/* ---- Hero ---- */
+.hero{
+  position:relative;
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  background:linear-gradient(180deg, #0d0d18 0%, #0a0a0f 60%, #08080c 100%);
+  overflow:hidden;
+  padding:2rem 1rem;
+}
+.hero-glow{
+  position:absolute;
+  width:600px;height:600px;
+  border-radius:50%;
+  filter:blur(150px);
+  opacity:0.12;
+  pointer-events:none;
+}
+.hero-glow.g1{background:#4a9eff;top:-200px;left:-100px;}
+.hero-glow.g2{background:#a855f7;bottom:-200px;right:-100px;}
+.hero-glow.g3{background:#00ff88;top:50%;left:50%;transform:translate(-50%,-50%);opacity:0.06;width:800px;height:800px;}
+
+.ascii-logo{
+  position:relative;
+  z-index:3;
+  font-size:clamp(8px,1.8vw,16px);
+  line-height:1.2;
+  white-space:pre;
+  color:#e4e4ef;
+  text-align:center;
+  letter-spacing:0.05em;
+  margin-bottom:1.5rem;
+  text-shadow:0 0 30px rgba(74,158,255,0.3), 0 0 60px rgba(74,158,255,0.1);
+}
+.ascii-logo .highlight{color:#4a9eff;}
+.ascii-logo .accent{color:#a855f7;}
+.ascii-logo .green{color:#00ff88;}
+
+.tagline{
+  position:relative;
+  z-index:3;
+  font-size:clamp(14px,2vw,20px);
+  color:var(--text2);
+  letter-spacing:0.15em;
+  text-transform:uppercase;
+  margin-bottom:2.5rem;
+  text-align:center;
+}
+.tagline span{
+  color:var(--text);
+  font-weight:600;
+}
+
+.hero-cta{
+  position:relative;
+  z-index:3;
+  display:inline-flex;
+  align-items:center;
+  gap:0.5rem;
+  padding:0.75rem 2rem;
+  font-family:var(--font-mono);
+  font-size:14px;
+  color:var(--text);
+  background:rgba(74,158,255,0.1);
+  border:1px solid rgba(74,158,255,0.3);
+  border-radius:8px;
+  text-decoration:none;
+  transition:all 0.3s ease;
+  cursor:pointer;
+}
+.hero-cta:hover{
+  background:rgba(74,158,255,0.2);
+  border-color:rgba(74,158,255,0.6);
+  box-shadow:0 0 30px rgba(74,158,255,0.15);
+  transform:translateY(-2px);
+}
+.hero-cta .arrow{transition:transform 0.3s;}
+.hero-cta:hover .arrow{transform:translateX(4px);}
+
+.scroll-hint{
+  position:absolute;
+  bottom:2rem;
+  z-index:3;
+  color:var(--text2);
+  font-size:12px;
+  letter-spacing:0.2em;
+  animation:float 2s ease-in-out infinite;
+}
+@keyframes float{
+  0%,100%{transform:translateY(0);}
+  50%{transform:translateY(8px);}
+}
+
+/* ---- Tools Section ---- */
+.tools-section{
+  max-width:1200px;
+  margin:0 auto;
+  padding:6rem 2rem 4rem;
+}
+.section-label{
+  font-size:11px;
+  letter-spacing:0.3em;
+  text-transform:uppercase;
+  color:var(--text2);
+  margin-bottom:0.75rem;
+}
+.section-title{
+  font-size:clamp(24px,4vw,36px);
+  font-weight:700;
+  color:var(--text);
+  margin-bottom:3rem;
+  line-height:1.3;
+}
+.section-title .dim{color:var(--text2);font-weight:400;}
+
+/* ---- Card Grid ---- */
+.tool-grid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:1.5rem;
+}
+@media(max-width:900px){.tool-grid{grid-template-columns:repeat(2,1fr);}}
+@media(max-width:560px){.tool-grid{grid-template-columns:1fr;}}
+
+.tool-card{
+  position:relative;
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:1.75rem;
+  text-decoration:none;
+  color:var(--text);
+  transition:all 0.35s cubic-bezier(0.4,0,0.2,1);
+  overflow:hidden;
+  display:flex;
+  flex-direction:column;
+  cursor:pointer;
+  opacity:0;
+  transform:translateY(30px);
+}
+.tool-card.visible{
+  opacity:1;
+  transform:translateY(0);
+}
+.tool-card::before{
+  content:'';
+  position:absolute;
+  inset:0;
+  border-radius:12px;
+  padding:1px;
+  background:linear-gradient(135deg, transparent 40%, var(--card-accent) 100%);
+  -webkit-mask:linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite:xor;
+  mask-composite:exclude;
+  opacity:0;
+  transition:opacity 0.35s;
+}
+.tool-card:hover::before{opacity:0.6;}
+.tool-card:hover{
+  transform:translateY(-6px);
+  border-color:transparent;
+  box-shadow:
+    0 20px 40px rgba(0,0,0,0.4),
+    0 0 40px color-mix(in srgb, var(--card-accent) 15%, transparent);
+}
+
+.card-icon{
+  font-size:11px;
+  line-height:1.25;
+  white-space:pre;
+  color:var(--card-accent);
+  margin-bottom:1.25rem;
+  min-height:55px;
+  display:flex;
+  align-items:flex-end;
+  opacity:0.85;
+  transition:opacity 0.3s;
+}
+.tool-card:hover .card-icon{opacity:1;}
+
+.card-title{
+  font-size:16px;
+  font-weight:700;
+  margin-bottom:0.5rem;
+  display:flex;
+  align-items:center;
+  gap:0.5rem;
+}
+.card-title .dot{
+  width:8px;height:8px;
+  border-radius:50%;
+  background:var(--card-accent);
+  flex-shrink:0;
+  box-shadow:0 0 8px var(--card-accent);
+}
+.card-desc{
+  font-size:13px;
+  color:var(--text2);
+  line-height:1.5;
+  flex:1;
+}
+.card-arrow{
+  margin-top:1.25rem;
+  font-size:12px;
+  color:var(--text2);
+  display:flex;
+  align-items:center;
+  gap:0.5rem;
+  transition:color 0.3s, gap 0.3s;
+}
+.tool-card:hover .card-arrow{
+  color:var(--card-accent);
+  gap:0.75rem;
+}
+
+/* ---- Footer ---- */
+.footer{
+  max-width:1200px;
+  margin:0 auto;
+  padding:4rem 2rem 3rem;
+  border-top:1px solid var(--border);
+  text-align:center;
+}
+.footer-art{
+  font-size:10px;
+  line-height:1.3;
+  white-space:pre;
+  color:var(--text2);
+  opacity:0.4;
+  margin-bottom:1.5rem;
+}
+.footer-text{
+  font-size:13px;
+  color:var(--text2);
+  letter-spacing:0.05em;
+}
+.footer-text em{
+  font-style:normal;
+  color:var(--text);
+}
+
+/* ---- Cursor blink ---- */
+.cursor{
+  display:inline-block;
+  width:10px;
+  height:1.1em;
+  background:var(--text);
+  margin-left:4px;
+  animation:blink 1s step-end infinite;
+  vertical-align:text-bottom;
+}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:0;}}
+
+/* ---- Typing effect ---- */
+.typed-line{overflow:hidden;white-space:nowrap;border-right:none;}
+</style>
+</head>
+<body>
+
+<!-- ===================== HERO ===================== -->
+<section class="hero">
+  <div class="hero-glow g1"></div>
+  <div class="hero-glow g2"></div>
+  <div class="hero-glow g3"></div>
+
+  <div class="ascii-logo" id="ascii-logo" aria-label="ASKI ART"></div>
+
+  <p class="tagline">ascii art tools <span>for developers</span></p>
+
+  <a href="#tools" class="hero-cta">
+    Explore the tools <span class="arrow">→</span>
+  </a>
+
+  <div class="scroll-hint">▼ scroll</div>
+</section>
+
+<!-- ===================== TOOLS ===================== -->
+<section class="tools-section" id="tools">
+  <p class="section-label">// the toolkit</p>
+  <h2 class="section-title">Six tools. <span class="dim">Zero dependencies.</span></h2>
+
+  <div class="tool-grid">
+
+    <a href="flow.html" class="tool-card" style="--card-accent:#4a9eff;">
+      <div class="card-icon"><pre>  ┌───┐    ┌───┐
+  │ A ├───→│ B │
+  └───┘    └─┬─┘
+              ▼
+           ┌───┐
+           │ C │
+           └───┘</pre></div>
+      <div class="card-title"><span class="dot"></span>Flow Builder</div>
+      <div class="card-desc">Figma-simple diagram builder. Boxes, diamonds, arrows — rendered as clean ASCII.</div>
+      <div class="card-arrow">Open tool →</div>
+    </a>
+
+    <a href="interface.html" class="tool-card" style="--card-accent:#00ff88;">
+      <div class="card-icon"><pre>┌─ Dashboard ──────┐
+│ CPU  ████░░ 67%  │
+│ MEM  ██████ 91%  │
+│ DISK ███░░░ 48%  │
+└──────────────────┘</pre></div>
+      <div class="card-title"><span class="dot"></span>Interface Builder</div>
+      <div class="card-desc">Build terminal dashboards with progress bars, tables, and panels.</div>
+      <div class="card-arrow">Open tool →</div>
+    </a>
+
+    <a href="sequence.html" class="tool-card" style="--card-accent:#f0a500;">
+      <div class="card-icon"><pre>  Client    Server    DB
+    │         │        │
+    ├──req──→ │        │
+    │         ├─query→ │
+    │         │ ←─res──┤
+    │ ←─resp──┤        │</pre></div>
+      <div class="card-title"><span class="dot"></span>Sequence Diagrams</div>
+      <div class="card-desc">Map out service interactions with actor lifelines and message arrows.</div>
+      <div class="card-arrow">Open tool →</div>
+    </a>
+
+    <a href="wireframe.html" class="tool-card" style="--card-accent:#00d4aa;">
+      <div class="card-icon"><pre>┌─────────────────┐
+│ [Logo]  Nav Nav │
+├─────────────────┤
+│ ┌────┐  Hello!  │
+│ │ Img│  ~~~~~~  │
+│ └────┘  [btn]   │
+└─────────────────┘</pre></div>
+      <div class="card-title"><span class="dot"></span>Wireframes</div>
+      <div class="card-desc">Mock up UIs in ASCII. Faster than Figma for quick ideas.</div>
+      <div class="card-arrow">Open tool →</div>
+    </a>
+
+    <a href="tables.html" class="tool-card" style="--card-accent:#e84393;">
+      <div class="card-icon"><pre>┌──────┬───────┬─────┐
+│ Name │ Role  │  #  │
+├──────┼───────┼─────┤
+│ Ada  │ Eng   │  42 │
+│ Bob  │ PM    │  17 │
+└──────┴───────┴─────┘</pre></div>
+      <div class="card-title"><span class="dot"></span>Tables</div>
+      <div class="card-desc">Paste data, pick a style, copy a perfectly formatted ASCII table.</div>
+      <div class="card-arrow">Open tool →</div>
+    </a>
+
+    <a href="image.html" class="tool-card" style="--card-accent:#a855f7;">
+      <div class="card-icon"><pre>    ░░▒▒▓▓██▓▓▒▒░░
+  ░▒▓█  ████████▓▒░
+  ▒▓██  ██  ████▓▒
+  ░▒▓████████▓▒░
+    ░░▒▒▓▓▓▓▒▒░░</pre></div>
+      <div class="card-title"><span class="dot"></span>Image Converter</div>
+      <div class="card-desc">Drop an image, get ASCII art. Logos, portraits, pixel art.</div>
+      <div class="card-arrow">Open tool →</div>
+    </a>
+
+  </div>
+</section>
+
+<!-- ===================== FOOTER ===================== -->
+<footer class="footer">
+  <div class="footer-art">╔══════════════════════════════════════════╗
+║  ~ crafted with ┃ and monospace fonts ~  ║
+╚══════════════════════════════════════════╝</div>
+  <p class="footer-text">Built for developers who think in <em>monospace</em>.</p>
+</footer>
+
+<script>
+// ---- ASCII Logo with typing animation ----
+const logoFrames = [
+`<span class="highlight">  █████╗</span>  ███████╗<span class="green"> ██╗  ██╗</span> ██╗      <span class="accent"> █████╗</span>  ██████╗  ████████╗
+<span class="highlight"> ██╔══██╗</span> ██╔════╝<span class="green"> ██║ ██╔╝</span> ██║      <span class="accent">██╔══██╗</span> ██╔══██╗ ╚══██╔══╝
+<span class="highlight"> ███████║</span> ███████╗<span class="green"> █████╔╝</span>  ██║      <span class="accent">███████║</span> ██████╔╝    ██║
+<span class="highlight"> ██╔══██║</span> ╚════██║<span class="green"> ██╔═██╗</span>  ██║      <span class="accent">██╔══██║</span> ██╔══██╗    ██║
+<span class="highlight"> ██║  ██║</span> ███████║<span class="green"> ██║  ██╗</span> ██║      <span class="accent">██║  ██║</span> ██║  ██║    ██║
+ ╚═╝  ╚═╝ ╚══════╝<span class="green"> ╚═╝  ╚═╝</span> ╚═╝      <span class="accent"> ╚═╝  ╚═╝</span> ╚═╝  ╚═╝    ╚═╝`
+];
+
+const logoEl = document.getElementById('ascii-logo');
+
+// Build the logo character by character (typewriter effect)
+function typewriterLogo() {
+  const fullHTML = logoFrames[0];
+  // Strip tags to get plain text length
+  const plainText = fullHTML.replace(/<[^>]*>/g, '');
+  const totalChars = plainText.length;
+
+  let charIndex = 0;
+  const speed = 2; // characters per frame
+  const charsPerTick = 4;
+
+  // We'll reveal line by line for a cleaner effect
+  const lines = fullHTML.split('\n');
+  let currentLine = 0;
+  let revealed = '';
+
+  function revealLine() {
+    if (currentLine >= lines.length) {
+      // Start subtle shimmer after reveal
+      setTimeout(startShimmer, 500);
+      return;
+    }
+    revealed += (currentLine > 0 ? '\n' : '') + lines[currentLine];
+    logoEl.innerHTML = revealed;
+    currentLine++;
+    setTimeout(revealLine, 70 + Math.random() * 40);
+  }
+
+  revealLine();
+}
+
+// Subtle character shimmer effect
+function startShimmer() {
+  const shimmerChars = '░▒▓█╔╗╚╝║═╣╠╬';
+  const fullHTML = logoFrames[0];
+  logoEl.innerHTML = fullHTML;
+
+  // Periodically swap a random non-space character briefly
+  setInterval(() => {
+    const el = logoEl;
+    const text = el.textContent;
+    // Pick a random position
+    const pos = Math.floor(Math.random() * text.length);
+    if (text[pos] && text[pos].trim() && Math.random() > 0.7) {
+      // Brief flash via text-shadow pulse — done through CSS instead
+      el.style.textShadow = `0 0 ${20 + Math.random()*30}px rgba(74,158,255,${0.2 + Math.random()*0.3}), 0 0 60px rgba(168,85,247,${0.05 + Math.random()*0.1})`;
+      setTimeout(() => {
+        el.style.textShadow = '0 0 30px rgba(74,158,255,0.3), 0 0 60px rgba(74,158,255,0.1)';
+      }, 150);
+    }
+  }, 800);
+}
+
+// ---- Intersection observer for card entrance ----
+function initCardAnimations() {
+  const cards = document.querySelectorAll('.tool-card');
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach((entry, i) => {
+      if (entry.isIntersecting) {
+        // Stagger the animation
+        const card = entry.target;
+        const index = Array.from(cards).indexOf(card);
+        setTimeout(() => {
+          card.classList.add('visible');
+        }, index * 100);
+        observer.unobserve(card);
+      }
+    });
+  }, { threshold: 0.1 });
+
+  cards.forEach(card => observer.observe(card));
+}
+
+// ---- Init ----
+document.addEventListener('DOMContentLoaded', () => {
+  typewriterLogo();
+  initCardAnimations();
+});
+</script>
+
+</body>
+</html>

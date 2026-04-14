@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aski Art — Image Converter</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0d0d0d;--surface:#1a1a1a;--surface2:#242424;--border:#333;--text:#e0e0e0;--text-dim:#888;--accent:#a855f7;--accent-dim:#7c3aed;--accent-glow:rgba(168,85,247,.25);--radius:8px;--mono:'Menlo','Monaco','Courier New',monospace}
+html,body{height:100%;overflow:hidden}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--text);display:flex;flex-direction:column;height:100vh}
+header{display:flex;align-items:center;justify-content:space-between;padding:12px 20px;border-bottom:1px solid var(--border);flex-shrink:0;background:var(--surface)}
+header h1{font-size:1.25rem;font-weight:700;letter-spacing:-.02em}
+header h1 span{color:var(--accent)}
+.preset-bar{display:flex;gap:6px;flex-wrap:wrap}
+.preset-btn{background:var(--surface2);border:1px solid var(--border);color:var(--text-dim);padding:4px 10px;border-radius:20px;font-size:.75rem;cursor:pointer;transition:all .15s}
+.preset-btn:hover{border-color:var(--accent);color:var(--accent)}
+.main-wrap{display:flex;flex:1;overflow:hidden}
+/* Sidebar */
+.sidebar{width:280px;min-width:280px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow-y:auto;transition:margin-left .25s;flex-shrink:0}
+.sidebar.collapsed{margin-left:-280px}
+.sidebar-toggle{position:absolute;left:280px;top:50%;transform:translateY(-50%);z-index:10;background:var(--surface);border:1px solid var(--border);border-left:none;color:var(--text-dim);width:24px;height:48px;display:flex;align-items:center;justify-content:center;cursor:pointer;border-radius:0 6px 6px 0;font-size:.8rem;transition:left .25s}
+.sidebar.collapsed~.sidebar-toggle{left:0}
+.sidebar section{padding:14px 16px;border-bottom:1px solid var(--border)}
+.sidebar section h3{font-size:.7rem;text-transform:uppercase;letter-spacing:.08em;color:var(--text-dim);margin-bottom:10px}
+label.row{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;font-size:.8rem}
+label.row span{color:var(--text-dim)}
+label.row .val{color:var(--accent);font-weight:600;min-width:30px;text-align:right}
+input[type=range]{-webkit-appearance:none;width:100%;height:4px;background:var(--surface2);border-radius:2px;outline:none;margin:4px 0 8px}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--accent);cursor:pointer;border:2px solid var(--bg)}
+select,input[type=text]{width:100%;padding:6px 8px;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:var(--radius);font-size:.8rem;outline:none}
+select:focus,input[type=text]:focus{border-color:var(--accent)}
+.toggle-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;font-size:.8rem}
+.toggle-row span{color:var(--text-dim)}
+.switch{position:relative;width:36px;height:20px;flex-shrink:0}
+.switch input{opacity:0;width:0;height:0}
+.switch .slider{position:absolute;inset:0;background:var(--surface2);border-radius:10px;cursor:pointer;transition:.2s;border:1px solid var(--border)}
+.switch .slider::before{content:'';position:absolute;width:14px;height:14px;left:2px;top:2px;background:var(--text-dim);border-radius:50%;transition:.2s}
+.switch input:checked+.slider{background:var(--accent-dim);border-color:var(--accent)}
+.switch input:checked+.slider::before{transform:translateX(16px);background:#fff}
+.custom-ramp{margin-top:6px;display:none}
+.custom-ramp.visible{display:block}
+.url-input{display:flex;gap:6px;margin-top:8px}
+.url-input input{flex:1}
+.url-input button{padding:4px 10px;background:var(--accent-dim);border:none;color:#fff;border-radius:var(--radius);cursor:pointer;font-size:.75rem;white-space:nowrap}
+.thumb-wrap{margin-top:10px;text-align:center;display:none}
+.thumb-wrap.visible{display:block}
+.thumb-wrap img{max-width:100%;max-height:120px;border-radius:var(--radius);border:1px solid var(--border)}
+/* Drop zone */
+.drop-zone{border:2px dashed var(--border);border-radius:12px;padding:32px 20px;text-align:center;cursor:pointer;transition:all .2s;margin-bottom:8px}
+.drop-zone:hover,.drop-zone.drag-over{border-color:var(--accent);background:var(--accent-glow)}
+.drop-zone .icon{font-size:2rem;margin-bottom:8px;opacity:.5}
+.drop-zone p{font-size:.8rem;color:var(--text-dim)}
+.drop-zone p strong{color:var(--text)}
+.drop-zone input{display:none}
+/* Preview */
+.preview-wrap{flex:1;display:flex;flex-direction:column;overflow:hidden;position:relative}
+.preview-toolbar{display:flex;align-items:center;gap:8px;padding:8px 16px;border-bottom:1px solid var(--border);flex-shrink:0;background:var(--surface)}
+.preview-toolbar button{background:var(--surface2);border:1px solid var(--border);color:var(--text-dim);padding:4px 10px;border-radius:var(--radius);font-size:.75rem;cursor:pointer;transition:all .15s}
+.preview-toolbar button:hover{border-color:var(--accent);color:var(--accent)}
+.preview-toolbar .spacer{flex:1}
+.zoom-lbl{font-size:.75rem;color:var(--text-dim)}
+.preview-container{flex:1;overflow:auto;padding:16px;background:var(--bg)}
+.preview-container.light-mode{background:#f5f5f5}
+#ascii-output{font-family:var(--mono);font-size:10px;line-height:1.1;white-space:pre;color:#d4d4d4;tab-size:4;min-height:100%}
+.preview-container.light-mode #ascii-output{color:#222}
+#ascii-output.green-text{color:#39ff14}
+</style>
+</head>
+<body>
+<a href="index.html" style="position:fixed;top:12px;left:16px;z-index:99999;color:#888;text-decoration:none;font-family:monospace;font-size:14px;padding:4px 10px;border-radius:6px;background:rgba(255,255,255,0.05);transition:all 0.2s" onmouseover="this.style.color='#fff';this.style.background='rgba(255,255,255,0.12)'" onmouseout="this.style.color='#888';this.style.background='rgba(255,255,255,0.05)'">← Aski Art</a>
+<header>
+  <h1><span>Aski Art</span> — Image Converter</h1>
+  <div class="preset-bar">
+    <button class="preset-btn" data-preset="logo">Logo Mode</button>
+    <button class="preset-btn" data-preset="portrait">Portrait Mode</button>
+    <button class="preset-btn" data-preset="pixel">Pixel Art</button>
+    <button class="preset-btn" data-preset="banner">Terminal Banner</button>
+  </div>
+</header>
+<div class="main-wrap">
+  <aside class="sidebar" id="sidebar">
+    <section>
+      <h3>Image Input</h3>
+      <div class="drop-zone" id="dropZone">
+        <div class="icon">&#128444;</div>
+        <p><strong>Drop image here</strong> or click to browse</p>
+        <p style="margin-top:4px;font-size:.7rem">Also: Cmd+V to paste</p>
+        <input type="file" id="fileInput" accept="image/*">
+      </div>
+      <div class="url-input">
+        <input type="text" id="urlInput" placeholder="Paste image URL...">
+        <button id="urlLoad">Load</button>
+      </div>
+      <div class="thumb-wrap" id="thumbWrap">
+        <img id="thumbnail" alt="thumbnail">
+      </div>
+    </section>
+    <section>
+      <h3>Conversion</h3>
+      <label class="row"><span>Width</span><span class="val" id="widthVal">80</span></label>
+      <input type="range" id="widthSlider" min="20" max="200" value="80">
+      <label class="row"><span>Aspect Ratio</span><span class="val" id="arVal">0.50</span></label>
+      <input type="range" id="arSlider" min="20" max="100" value="50">
+      <label class="row"><span>Brightness</span><span class="val" id="brightVal">0</span></label>
+      <input type="range" id="brightSlider" min="-100" max="100" value="0">
+      <label class="row"><span>Contrast</span><span class="val" id="contrastVal">0</span></label>
+      <input type="range" id="contrastSlider" min="-100" max="100" value="0">
+    </section>
+    <section>
+      <h3>Character Set</h3>
+      <select id="charsetSelect">
+        <option value="standard">Standard</option>
+        <option value="detailed">Detailed</option>
+        <option value="blocks">Blocks (░▒▓█)</option>
+        <option value="minimal">Minimal ( .:#)</option>
+        <option value="binary">Binary ( █)</option>
+        <option value="custom">Custom...</option>
+      </select>
+      <div class="custom-ramp" id="customRampWrap">
+        <input type="text" id="customRamp" placeholder="chars light→dark e.g. .:-=+*#%@">
+      </div>
+      <div style="margin-top:10px">
+        <div class="toggle-row"><span>Invert</span><label class="switch"><input type="checkbox" id="invertToggle"><span class="slider"></span></label></div>
+        <div class="toggle-row"><span>Color mode (ANSI)</span><label class="switch"><input type="checkbox" id="colorToggle"><span class="slider"></span></label></div>
+      </div>
+    </section>
+    <section>
+      <h3>Preview Style</h3>
+      <div class="toggle-row"><span>Light background</span><label class="switch"><input type="checkbox" id="lightBgToggle"><span class="slider"></span></label></div>
+      <div class="toggle-row"><span>Green text</span><label class="switch"><input type="checkbox" id="greenToggle"><span class="slider"></span></label></div>
+    </section>
+  </aside>
+  <button class="sidebar-toggle" id="sidebarToggle">&#9664;</button>
+  <div class="preview-wrap">
+    <div class="preview-toolbar">
+      <button id="zoomOut">&#8722;</button>
+      <span class="zoom-lbl" id="zoomLbl">10px</span>
+      <button id="zoomIn">+</button>
+      <span class="spacer"></span>
+      <button id="copyPlain">Copy Plain Text</button>
+      <button id="copyAnsi">Copy ANSI Colors</button>
+      <button id="copyHtml">Copy as HTML</button>
+      <button id="downloadTxt">Download .txt</button>
+    </div>
+    <div class="preview-container" id="previewContainer">
+      <pre id="ascii-output"></pre>
+    </div>
+  </div>
+</div>
+<canvas id="hiddenCanvas" style="display:none"></canvas>
+
+<script>
+(function(){
+  // Character ramps
+  const CHARSETS = {
+    standard:  ' .:-=+*#%@',
+    detailed:  " .'`^\",:;Il!i><~+_-?][}{1)(|\\/tfjrxnuvczXYUJCLQ0OZmwqpdbkhao*#MW&8%B@$",
+    blocks:    ' ░▒▓█',
+    minimal:   ' .:#',
+    binary:    ' █'
+  };
+
+  // Demo ASCII art shown before image loads
+  const DEMO_ART = `
+                              _____ _    _    ___        _
+                             |  _  | |  (_)  / _ \\      | |
+                             | |_| |  ___| |/ /_\\ \\_ __| |_
+                             |  _  | / __| ||  _  | '__| __|
+                             | | | | \\__ \\ || | | | |  | |_
+                             \\_| |_/ |___/_|\\_| |_|_|   \\__|
+
+
+                     ::::::::::::::::::::::::::::::::::::::::::::::::
+                     ::                                            ::
+                     ::    Drop an image to convert it to ASCII    ::
+                     ::                                            ::
+                     ::    Supports: PNG, JPG, GIF, SVG, WebP      ::
+                     ::                                            ::
+                     ::    Paste from clipboard with Cmd+V         ::
+                     ::                                            ::
+                     ::::::::::::::::::::::::::::::::::::::::::::::::
+`;
+
+  // State
+  let sourceImage = null;  // HTMLImageElement
+  let currentAscii = '';
+  let currentColorData = null; // [{char,r,g,b}, ...]
+  let fontSize = 10;
+  let rafId = null;
+
+  // DOM refs
+  const $ = s => document.querySelector(s);
+  const output = $('#ascii-output');
+  const canvas = $('#hiddenCanvas');
+  const ctx = canvas.getContext('2d', {willReadFrequently: true});
+  const previewContainer = $('#previewContainer');
+
+  // Show demo
+  output.textContent = DEMO_ART;
+
+  // Sidebar toggle
+  const sidebar = $('#sidebar');
+  const sidebarToggle = $('#sidebarToggle');
+  sidebarToggle.addEventListener('click', () => {
+    sidebar.classList.toggle('collapsed');
+    sidebarToggle.innerHTML = sidebar.classList.contains('collapsed') ? '&#9654;' : '&#9664;';
+  });
+
+  // File input
+  const dropZone = $('#dropZone');
+  const fileInput = $('#fileInput');
+  dropZone.addEventListener('click', () => fileInput.click());
+  dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+  dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+  dropZone.addEventListener('drop', e => {
+    e.preventDefault();
+    dropZone.classList.remove('drag-over');
+    if (e.dataTransfer.files.length) loadFile(e.dataTransfer.files[0]);
+  });
+  fileInput.addEventListener('change', () => { if (fileInput.files.length) loadFile(fileInput.files[0]); });
+
+  // Paste
+  document.addEventListener('paste', e => {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+    for (const item of items) {
+      if (item.type.startsWith('image/')) {
+        loadFile(item.getAsFile());
+        return;
+      }
+    }
+  });
+
+  // URL load
+  $('#urlLoad').addEventListener('click', () => {
+    const url = $('#urlInput').value.trim();
+    if (!url) return;
+    loadFromURL(url);
+  });
+  $('#urlInput').addEventListener('keydown', e => {
+    if (e.key === 'Enter') $('#urlLoad').click();
+  });
+
+  function loadFile(file) {
+    const reader = new FileReader();
+    reader.onload = e => loadImageSrc(e.target.result);
+    reader.readAsDataURL(file);
+  }
+
+  function loadFromURL(url) {
+    // Use a proxy-free approach: just set crossOrigin and hope for CORS,
+    // fallback to non-CORS (thumbnail only, no pixel read)
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      sourceImage = img;
+      showThumbnail(img.src);
+      scheduleConvert();
+    };
+    img.onerror = () => {
+      // Retry without crossOrigin
+      const img2 = new Image();
+      img2.onload = () => {
+        sourceImage = img2;
+        showThumbnail(url);
+        scheduleConvert();
+      };
+      img2.onerror = () => alert('Failed to load image from URL.');
+      img2.src = url;
+    };
+    img.src = url;
+  }
+
+  function loadImageSrc(src) {
+    const img = new Image();
+    img.onload = () => {
+      sourceImage = img;
+      showThumbnail(src);
+      scheduleConvert();
+    };
+    img.src = src;
+  }
+
+  function showThumbnail(src) {
+    const wrap = $('#thumbWrap');
+    $('#thumbnail').src = src;
+    wrap.classList.add('visible');
+  }
+
+  // Sliders & controls
+  const widthSlider = $('#widthSlider');
+  const arSlider = $('#arSlider');
+  const brightSlider = $('#brightSlider');
+  const contrastSlider = $('#contrastSlider');
+  const charsetSelect = $('#charsetSelect');
+  const customRampWrap = $('#customRampWrap');
+  const customRamp = $('#customRamp');
+  const invertToggle = $('#invertToggle');
+  const colorToggle = $('#colorToggle');
+  const lightBgToggle = $('#lightBgToggle');
+  const greenToggle = $('#greenToggle');
+
+  function updateSliderLabels() {
+    $('#widthVal').textContent = widthSlider.value;
+    $('#arVal').textContent = (arSlider.value / 100).toFixed(2);
+    $('#brightVal').textContent = brightSlider.value;
+    $('#contrastVal').textContent = contrastSlider.value;
+  }
+
+  [widthSlider, arSlider, brightSlider, contrastSlider].forEach(s => {
+    s.addEventListener('input', () => { updateSliderLabels(); scheduleConvert(); });
+  });
+
+  charsetSelect.addEventListener('change', () => {
+    customRampWrap.classList.toggle('visible', charsetSelect.value === 'custom');
+    scheduleConvert();
+  });
+  customRamp.addEventListener('input', () => scheduleConvert());
+  invertToggle.addEventListener('change', () => scheduleConvert());
+  colorToggle.addEventListener('change', () => scheduleConvert());
+
+  lightBgToggle.addEventListener('change', () => {
+    previewContainer.classList.toggle('light-mode', lightBgToggle.checked);
+  });
+  greenToggle.addEventListener('change', () => {
+    output.classList.toggle('green-text', greenToggle.checked);
+  });
+
+  // Zoom
+  $('#zoomIn').addEventListener('click', () => { fontSize = Math.min(24, fontSize + 1); applyZoom(); });
+  $('#zoomOut').addEventListener('click', () => { fontSize = Math.max(3, fontSize - 1); applyZoom(); });
+  function applyZoom() {
+    output.style.fontSize = fontSize + 'px';
+    output.style.lineHeight = (fontSize <= 6 ? 1.0 : 1.1);
+    $('#zoomLbl').textContent = fontSize + 'px';
+  }
+
+  // Presets
+  const PRESETS = {
+    logo:     { width: 80, charset: 'binary',   invert: false, contrast: 50, brightness: 0, ar: 50 },
+    portrait: { width: 100, charset: 'detailed', invert: false, contrast: 10, brightness: 0, ar: 50 },
+    pixel:    { width: 40, charset: 'blocks',    invert: false, contrast: 0,  brightness: 0, ar: 50 },
+    banner:   { width: 80, charset: 'standard',  invert: false, contrast: 0,  brightness: 0, ar: 50 }
+  };
+  document.querySelectorAll('.preset-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const p = PRESETS[btn.dataset.preset];
+      if (!p) return;
+      widthSlider.value = p.width;
+      charsetSelect.value = p.charset;
+      invertToggle.checked = p.invert;
+      contrastSlider.value = p.contrast;
+      brightSlider.value = p.brightness;
+      arSlider.value = p.ar;
+      customRampWrap.classList.toggle('visible', p.charset === 'custom');
+      updateSliderLabels();
+      scheduleConvert();
+    });
+  });
+
+  // Conversion
+  function scheduleConvert() {
+    if (rafId) cancelAnimationFrame(rafId);
+    rafId = requestAnimationFrame(convert);
+  }
+
+  function getRamp() {
+    if (charsetSelect.value === 'custom') {
+      const r = customRamp.value;
+      return r.length >= 2 ? r : ' .:#';
+    }
+    return CHARSETS[charsetSelect.value] || CHARSETS.standard;
+  }
+
+  function convert() {
+    rafId = null;
+    if (!sourceImage) return;
+
+    const targetWidth = parseInt(widthSlider.value);
+    const aspectRatio = parseInt(arSlider.value) / 100;
+    const brightness = parseInt(brightSlider.value);
+    const contrast = parseInt(contrastSlider.value);
+    const invert = invertToggle.checked;
+    const useColor = colorToggle.checked;
+    const ramp = getRamp();
+
+    const img = sourceImage;
+    const imgAspect = img.height / img.width;
+    const targetHeight = Math.max(1, Math.round(targetWidth * imgAspect * aspectRatio));
+
+    // Draw image to canvas at target size
+    canvas.width = targetWidth;
+    canvas.height = targetHeight;
+    ctx.fillStyle = lightBgToggle.checked ? '#ffffff' : '#000000';
+    ctx.fillRect(0, 0, targetWidth, targetHeight);
+    ctx.drawImage(img, 0, 0, targetWidth, targetHeight);
+
+    const imageData = ctx.getImageData(0, 0, targetWidth, targetHeight);
+    const pixels = imageData.data;
+
+    // Contrast factor
+    const cf = (259 * (contrast + 255)) / (255 * (259 - contrast));
+
+    let lines = [];
+    currentColorData = [];
+    const rampLen = ramp.length;
+
+    for (let y = 0; y < targetHeight; y++) {
+      let line = '';
+      for (let x = 0; x < targetWidth; x++) {
+        const idx = (y * targetWidth + x) * 4;
+        let r = pixels[idx];
+        let g = pixels[idx + 1];
+        let b = pixels[idx + 2];
+        const a = pixels[idx + 3];
+
+        // Handle transparency — blend with background
+        if (a < 255) {
+          const bgVal = lightBgToggle.checked ? 255 : 0;
+          const af = a / 255;
+          r = Math.round(r * af + bgVal * (1 - af));
+          g = Math.round(g * af + bgVal * (1 - af));
+          b = Math.round(b * af + bgVal * (1 - af));
+        }
+
+        // Apply brightness
+        r = clamp(r + brightness * 2.55);
+        g = clamp(g + brightness * 2.55);
+        b = clamp(b + brightness * 2.55);
+
+        // Apply contrast
+        r = clamp(cf * (r - 128) + 128);
+        g = clamp(cf * (g - 128) + 128);
+        b = clamp(cf * (b - 128) + 128);
+
+        // Luminance
+        let lum = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+        if (invert) lum = 1 - lum;
+
+        const charIdx = Math.min(rampLen - 1, Math.max(0, Math.floor(lum * rampLen)));
+        const ch = ramp[charIdx];
+        line += ch;
+
+        if (useColor) {
+          currentColorData.push({char: ch, r: Math.round(r), g: Math.round(g), b: Math.round(b)});
+        }
+      }
+      lines.push(line);
+    }
+
+    currentAscii = lines.join('\n');
+
+    // Render
+    if (useColor && !lightBgToggle.checked) {
+      renderColorPreview(lines, targetWidth, targetHeight);
+    } else {
+      output.innerHTML = '';
+      output.textContent = currentAscii;
+    }
+  }
+
+  function renderColorPreview(lines, w, h) {
+    // Build colored HTML
+    let html = '';
+    let di = 0;
+    for (let y = 0; y < h; y++) {
+      for (let x = 0; x < w; x++) {
+        const d = currentColorData[di++];
+        const ch = escapeHtml(d.char);
+        html += `<span style="color:rgb(${d.r},${d.g},${d.b})">${ch}</span>`;
+      }
+      html += '\n';
+    }
+    output.innerHTML = html;
+  }
+
+  function escapeHtml(s) {
+    if (s === '&') return '&amp;';
+    if (s === '<') return '&lt;';
+    if (s === '>') return '&gt;';
+    if (s === '"') return '&quot;';
+    return s;
+  }
+
+  function clamp(v) { return Math.max(0, Math.min(255, v)); }
+
+  // Copy / Download
+  $('#copyPlain').addEventListener('click', () => {
+    navigator.clipboard.writeText(currentAscii).then(() => flash($('#copyPlain'), 'Copied!'));
+  });
+
+  $('#copyAnsi').addEventListener('click', () => {
+    if (!currentColorData || !currentColorData.length) {
+      navigator.clipboard.writeText(currentAscii).then(() => flash($('#copyAnsi'), 'Copied (plain)'));
+      return;
+    }
+    const w = parseInt(widthSlider.value);
+    let ansi = '';
+    for (let i = 0; i < currentColorData.length; i++) {
+      const d = currentColorData[i];
+      ansi += `\x1b[38;2;${d.r};${d.g};${d.b}m${d.char}`;
+      if ((i + 1) % w === 0) ansi += '\x1b[0m\n';
+    }
+    ansi += '\x1b[0m';
+    navigator.clipboard.writeText(ansi).then(() => flash($('#copyAnsi'), 'Copied!'));
+  });
+
+  $('#copyHtml').addEventListener('click', () => {
+    let html;
+    if (currentColorData && currentColorData.length) {
+      const w = parseInt(widthSlider.value);
+      html = '<pre style="font-family:monospace;font-size:10px;line-height:1.1;background:#0d0d0d;color:#d4d4d4;padding:16px;display:inline-block">';
+      for (let i = 0; i < currentColorData.length; i++) {
+        const d = currentColorData[i];
+        html += `<span style="color:rgb(${d.r},${d.g},${d.b})">${escapeHtml(d.char)}</span>`;
+        if ((i + 1) % w === 0) html += '\n';
+      }
+      html += '</pre>';
+    } else {
+      html = `<pre style="font-family:monospace;font-size:10px;line-height:1.1;background:#0d0d0d;color:#d4d4d4;padding:16px;display:inline-block">${currentAscii.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</pre>`;
+    }
+    navigator.clipboard.writeText(html).then(() => flash($('#copyHtml'), 'Copied!'));
+  });
+
+  $('#downloadTxt').addEventListener('click', () => {
+    const blob = new Blob([currentAscii], {type: 'text/plain'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'ascii-art.txt';
+    a.click();
+    URL.revokeObjectURL(a.href);
+    flash($('#downloadTxt'), 'Downloaded!');
+  });
+
+  function flash(btn, msg) {
+    const orig = btn.textContent;
+    btn.textContent = msg;
+    btn.style.borderColor = 'var(--accent)';
+    btn.style.color = 'var(--accent)';
+    setTimeout(() => { btn.textContent = orig; btn.style.borderColor = ''; btn.style.color = ''; }, 1200);
+  }
+
+  // Init
+  updateSliderLabels();
+  applyZoom();
+})();
+</script>
+</body>
+</html>

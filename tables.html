@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aski Art — Tables</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#1a1a2e;--bg2:#16213e;--bg3:#0f3460;--surface:#1e2746;--surface2:#253256;
+  --accent:#e84393;--accent2:#fd79a8;--text:#e0e0e0;--text2:#a0a0b0;--text3:#6c6c80;
+  --border:#2a2a4a;--radius:8px;--mono:'SF Mono','Fira Code','Cascadia Code',Consolas,monospace;
+}
+html{font-size:14px}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column;overflow-x:hidden}
+::selection{background:var(--accent);color:#fff}
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:var(--accent)}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:var(--text)}
+input,textarea,select{font-family:inherit;color:var(--text);background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:4px 8px;outline:none}
+input:focus,textarea:focus,select:focus{border-color:var(--accent)}
+
+/* Header */
+.header{padding:20px 32px 0;display:flex;align-items:baseline;gap:12px}
+.header h1{font-size:1.6rem;font-weight:700;letter-spacing:-0.5px}
+.header h1 span{color:var(--accent)}
+.header .sub{color:var(--text3);font-size:.85rem}
+
+/* Tabs */
+.tabs{display:flex;gap:2px;padding:16px 32px 0}
+.tab{padding:8px 20px;border-radius:var(--radius) var(--radius) 0 0;font-size:.85rem;font-weight:600;color:var(--text2);transition:all .15s}
+.tab:hover{color:var(--text);background:var(--surface)}
+.tab.active{background:var(--surface);color:var(--accent)}
+
+/* Main layout */
+.main{display:flex;gap:0;flex:1;min-height:0}
+.editor-panel{flex:1;min-width:0;background:var(--surface);padding:20px 24px;display:flex;flex-direction:column;gap:16px;border-right:1px solid var(--border)}
+.preview-panel{flex:1;min-width:0;padding:20px 24px;display:flex;flex-direction:column;gap:12px;overflow:auto}
+
+/* Controls bar */
+.controls{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.ctrl-group{display:flex;align-items:center;gap:4px;background:var(--bg);border-radius:6px;padding:2px}
+.ctrl-group label{font-size:.75rem;color:var(--text3);padding:0 6px;white-space:nowrap}
+.ctrl-btn{padding:4px 10px;font-size:.78rem;border-radius:4px;color:var(--text2);transition:all .12s}
+.ctrl-btn:hover{background:var(--surface2);color:var(--text)}
+.ctrl-btn.active{background:var(--accent);color:#fff}
+.ctrl-btn.sm{padding:2px 8px;font-size:.75rem}
+.ctrl-select{font-size:.78rem;padding:3px 6px;background:var(--bg);border:1px solid var(--border);border-radius:4px}
+
+/* Toggle */
+.toggle-wrap{display:flex;align-items:center;gap:6px;font-size:.78rem;color:var(--text2)}
+.toggle{width:34px;height:18px;background:var(--border);border-radius:9px;position:relative;cursor:pointer;transition:background .2s}
+.toggle.on{background:var(--accent)}
+.toggle::after{content:'';position:absolute;top:2px;left:2px;width:14px;height:14px;background:#fff;border-radius:50%;transition:left .2s}
+.toggle.on::after{left:18px}
+
+/* Spreadsheet */
+.spreadsheet-wrap{flex:1;overflow:auto;border:1px solid var(--border);border-radius:var(--radius);position:relative}
+.spreadsheet{border-collapse:collapse;width:max-content;min-width:100%}
+.spreadsheet th,.spreadsheet td{border:1px solid var(--border);padding:0;position:relative}
+.spreadsheet th{background:var(--bg);font-size:.7rem;color:var(--text3);font-weight:600;padding:4px 8px;text-align:center;user-select:none;white-space:nowrap}
+.spreadsheet th.col-header{min-width:80px;cursor:pointer}
+.spreadsheet th.col-header:hover{color:var(--accent)}
+.spreadsheet th.corner{background:var(--bg);width:36px;min-width:36px}
+.spreadsheet th .sort-ind{font-size:.6rem;margin-left:2px}
+.spreadsheet td{height:28px}
+.spreadsheet td .cell-input{width:100%;height:100%;border:none;border-radius:0;padding:2px 6px;font-size:.82rem;background:transparent}
+.spreadsheet td .cell-input:focus{background:rgba(232,67,147,.08);outline:2px solid var(--accent);outline-offset:-2px;z-index:1;position:relative}
+.spreadsheet tr:hover td{background:rgba(255,255,255,.02)}
+.col-resize{position:absolute;right:-2px;top:0;bottom:0;width:5px;cursor:col-resize;z-index:2}
+.col-resize:hover{background:var(--accent)}
+.add-col-btn,.add-row-btn{display:flex;align-items:center;justify-content:center;color:var(--text3);font-size:.85rem;transition:color .15s}
+.add-col-btn:hover,.add-row-btn:hover{color:var(--accent)}
+.add-col-btn{width:36px;height:100%;border-left:1px solid var(--border)}
+.add-row-btn{height:28px;border-top:1px solid var(--border)}
+.ss-toolbar{display:flex;gap:6px;margin-bottom:8px;align-items:center}
+.ss-toolbar button{font-size:.75rem;padding:4px 10px;border-radius:4px;color:var(--text2);background:var(--bg);border:1px solid var(--border)}
+.ss-toolbar button:hover{border-color:var(--accent);color:var(--accent)}
+
+/* Alignment controls row */
+.col-align-row{display:flex;gap:2px;margin-bottom:8px;flex-wrap:wrap}
+.col-align-chip{display:flex;align-items:center;gap:4px;background:var(--bg);border:1px solid var(--border);border-radius:4px;padding:2px 6px;font-size:.7rem;color:var(--text3)}
+.col-align-chip select{font-size:.7rem;padding:1px 4px;background:var(--surface);border:1px solid var(--border);border-radius:3px;color:var(--text2)}
+
+/* Paste area */
+.paste-area{flex:1;display:flex;flex-direction:column;gap:12px}
+.paste-area textarea{flex:1;min-height:200px;resize:none;font-family:var(--mono);font-size:.82rem;padding:12px;border-radius:var(--radius);line-height:1.5}
+.parse-preview{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:12px;max-height:200px;overflow:auto;font-family:var(--mono);font-size:.78rem;color:var(--text2)}
+
+/* Preview styles */
+.preview-header{display:flex;align-items:center;gap:12px}
+.preview-header h3{font-size:.9rem;font-weight:600}
+.preview-mode-btns{display:flex;gap:2px;margin-left:auto}
+.style-block{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;transition:border-color .15s}
+.style-block:hover{border-color:var(--accent)}
+.style-block-header{display:flex;align-items:center;justify-content:between;padding:8px 12px;background:var(--bg);border-bottom:1px solid var(--border)}
+.style-block-header .style-name{font-size:.78rem;font-weight:600;color:var(--text2);flex:1}
+.copy-btn{font-size:.72rem;padding:3px 10px;border-radius:4px;background:var(--surface2);color:var(--text2);transition:all .15s}
+.copy-btn:hover{background:var(--accent);color:#fff}
+.copy-btn.copied{background:#27ae60;color:#fff}
+.style-block pre{padding:10px 14px;overflow-x:auto;font-family:var(--mono);font-size:.78rem;line-height:1.45;color:var(--text);white-space:pre;margin:0}
+
+/* Hidden panels */
+.panel{display:none}
+.panel.active{display:flex;flex-direction:column;flex:1;min-height:0}
+
+/* Responsive */
+@media(max-width:900px){
+  .main{flex-direction:column}
+  .editor-panel{border-right:none;border-bottom:1px solid var(--border)}
+}
+</style>
+</head>
+<body>
+<a href="index.html" style="position:fixed;top:12px;left:16px;z-index:99999;color:#888;text-decoration:none;font-family:monospace;font-size:14px;padding:4px 10px;border-radius:6px;background:rgba(255,255,255,0.05);transition:all 0.2s" onmouseover="this.style.color='#fff';this.style.background='rgba(255,255,255,0.12)'" onmouseout="this.style.color='#888';this.style.background='rgba(255,255,255,0.05)'">← Aski Art</a>
+
+<div class="header">
+  <h1>Aski Art <span>Tables</span></h1>
+  <span class="sub">ASCII table generator & formatter</span>
+</div>
+
+<div class="tabs">
+  <button class="tab active" data-tab="spreadsheet">Spreadsheet</button>
+  <button class="tab" data-tab="paste">Paste Data</button>
+  <button class="tab" data-tab="markdown">Markdown</button>
+</div>
+
+<div class="main">
+  <div class="editor-panel">
+
+    <!-- Controls -->
+    <div class="controls">
+      <div class="ctrl-group">
+        <label>Padding</label>
+        <button class="ctrl-btn" data-pad="0">0</button>
+        <button class="ctrl-btn active" data-pad="1">1</button>
+        <button class="ctrl-btn" data-pad="2">2</button>
+      </div>
+      <div class="ctrl-group">
+        <label>Truncate</label>
+        <select class="ctrl-select" id="truncateMode">
+          <option value="none">None</option>
+          <option value="ellipsis">Ellipsis</option>
+          <option value="wrap">Wrap</option>
+        </select>
+        <input type="number" id="truncateWidth" value="30" min="5" max="100" style="width:48px;font-size:.78rem" title="Max column width">
+      </div>
+      <div class="toggle-wrap">
+        <span>Header</span>
+        <div class="toggle on" id="toggleHeader"></div>
+      </div>
+      <div class="toggle-wrap">
+        <span>Row Sep</span>
+        <div class="toggle" id="toggleRowSep"></div>
+      </div>
+      <div class="toggle-wrap">
+        <span>Row #</span>
+        <div class="toggle" id="toggleRowNum"></div>
+      </div>
+      <div class="toggle-wrap">
+        <span>Decimal Align</span>
+        <div class="toggle" id="toggleDecimal"></div>
+      </div>
+    </div>
+
+    <!-- Alignment per column -->
+    <div class="col-align-row" id="colAlignRow"></div>
+
+    <!-- Spreadsheet panel -->
+    <div class="panel active" id="panelSpreadsheet">
+      <div class="ss-toolbar">
+        <button id="addRowBtn">+ Row</button>
+        <button id="addColBtn">+ Column</button>
+        <button id="delRowBtn">- Row</button>
+        <button id="delColBtn">- Column</button>
+        <button id="clearBtn">Clear</button>
+        <button id="sampleBtn">Sample Data</button>
+      </div>
+      <div class="spreadsheet-wrap" id="spreadsheetWrap">
+        <table class="spreadsheet" id="spreadsheet"></table>
+      </div>
+    </div>
+
+    <!-- Paste panel -->
+    <div class="panel" id="panelPaste">
+      <textarea id="pasteInput" placeholder="Paste CSV, TSV, or space-separated data here..."></textarea>
+      <div style="display:flex;gap:8px;align-items:center">
+        <button class="ctrl-btn" style="background:var(--accent);color:#fff;padding:6px 16px;border-radius:6px" id="parseBtn">Parse & Load</button>
+        <span style="font-size:.75rem;color:var(--text3)" id="delimInfo"></span>
+      </div>
+      <div class="parse-preview" id="parsePreview" style="display:none"></div>
+    </div>
+
+    <!-- Markdown panel -->
+    <div class="panel" id="panelMarkdown">
+      <textarea id="mdInput" placeholder="Paste a Markdown table here...
+| Name  | Age | City |
+|-------|-----|------|
+| Alice | 30  | NYC  |"></textarea>
+      <button class="ctrl-btn" style="background:var(--accent);color:#fff;padding:6px 16px;border-radius:6px;align-self:flex-start" id="parseMdBtn">Parse & Load</button>
+    </div>
+  </div>
+
+  <div class="preview-panel" id="previewPanel">
+    <div class="preview-header">
+      <h3>Preview</h3>
+      <div class="preview-mode-btns">
+        <button class="ctrl-btn active" data-pmode="all">All Styles</button>
+        <button class="ctrl-btn" data-pmode="single">Single</button>
+      </div>
+    </div>
+    <div id="previewContent" style="display:flex;flex-direction:column;gap:10px;overflow:auto;flex:1"></div>
+  </div>
+</div>
+
+<script>
+(function(){
+'use strict';
+
+// ---- State ----
+const S = {
+  data: [['Name','Age','City'],['Alice','30','NYC'],['Bob','25','LA'],['Charlie','35','Chicago']],
+  colAligns: ['left','left','left'],
+  padding: 1,
+  hasHeader: true,
+  rowSep: false,
+  rowNum: false,
+  decimalAlign: false,
+  truncateMode: 'none',
+  truncateWidth: 30,
+  sortCol: -1,
+  sortDir: 1,
+  previewMode: 'all',
+  singleStyle: 'grid',
+  colWidths: []
+};
+
+const STYLES = ['simple','grid','unicode','double','rounded','markdown','compact'];
+const STYLE_NAMES = {simple:'Simple',grid:'Grid',unicode:'Unicode',double:'Double',rounded:'Rounded',markdown:'Markdown',compact:'Compact'};
+
+const BORDERS = {
+  simple:  {h:'-',v:' ',tl:' ',tr:' ',bl:' ',br:' ',ml:' ',mr:' ',mt:' ',mb:' ',cross:' ',hh:'-'},
+  grid:    {h:'-',v:'|',tl:'+',tr:'+',bl:'+',br:'+',ml:'+',mr:'+',mt:'+',mb:'+',cross:'+'},
+  unicode: {h:'\u2500',v:'\u2502',tl:'\u250C',tr:'\u2510',bl:'\u2514',br:'\u2518',ml:'\u251C',mr:'\u2524',mt:'\u252C',mb:'\u2534',cross:'\u253C'},
+  double:  {h:'\u2550',v:'\u2551',tl:'\u2554',tr:'\u2557',bl:'\u255A',br:'\u255D',ml:'\u2560',mr:'\u2563',mt:'\u2566',mb:'\u2569',cross:'\u256C'},
+  rounded: {h:'\u2500',v:'\u2502',tl:'\u256D',tr:'\u256E',bl:'\u2570',br:'\u256F',ml:'\u251C',mr:'\u2524',mt:'\u252C',mb:'\u2534',cross:'\u253C'},
+  markdown:{h:'-',v:'|',tl:'|',tr:'|',bl:'|',br:'|',ml:'|',mr:'|',mt:'|',mb:'|',cross:'|'}
+};
+
+// ---- Rendering engine ----
+function getData(){
+  let d = S.data.map(r=>[...r]);
+  if(d.length===0) return [];
+  // Sort
+  if(S.sortCol>=0 && S.sortCol<(d[0]||[]).length){
+    const hdr = S.hasHeader ? d.shift() : null;
+    const sc = S.sortCol;
+    d.sort((a,b)=>{
+      const av=a[sc]||'', bv=b[sc]||'';
+      const an=parseFloat(av), bn=parseFloat(bv);
+      if(!isNaN(an)&&!isNaN(bn)) return (an-bn)*S.sortDir;
+      return av.localeCompare(bv)*S.sortDir;
+    });
+    if(hdr) d.unshift(hdr);
+  }
+  // Row numbers
+  if(S.rowNum){
+    d = d.map((r,i)=>{
+      if(i===0 && S.hasHeader) return ['#',...r];
+      const n = S.hasHeader ? i : i+1;
+      return [String(n),...r];
+    });
+  }
+  return d;
+}
+
+function computeColWidths(data){
+  if(!data.length) return [];
+  const cols = Math.max(...data.map(r=>r.length));
+  const w = Array(cols).fill(0);
+  for(const row of data){
+    for(let c=0;c<cols;c++){
+      const val = (row[c]||'').toString();
+      w[c] = Math.max(w[c], val.length);
+    }
+  }
+  // Apply truncate
+  if(S.truncateMode==='ellipsis'){
+    for(let c=0;c<cols;c++) w[c]=Math.min(w[c],S.truncateWidth);
+  }
+  return w;
+}
+
+function padCell(val, width, align, pad){
+  val = (val||'').toString();
+  if(S.truncateMode==='ellipsis' && val.length>width){
+    val = val.slice(0, width-1)+'\u2026';
+  }
+  const p = ' '.repeat(pad);
+  const diff = width - val.length;
+  let content;
+  if(align==='right') content = ' '.repeat(diff)+val;
+  else if(align==='center'){
+    const l = Math.floor(diff/2);
+    content = ' '.repeat(l)+val+' '.repeat(diff-l);
+  } else content = val+' '.repeat(diff);
+  return p+content+p;
+}
+
+function getAlign(colIdx){
+  // Adjust for row number column
+  const offset = S.rowNum ? 1 : 0;
+  if(colIdx < offset) return 'right';
+  const ai = colIdx - offset;
+  return S.colAligns[ai] || 'left';
+}
+
+function renderStyle(style){
+  const data = getData();
+  if(!data.length) return '(no data)';
+  const cw = computeColWidths(data);
+  const pad = S.padding;
+  const cols = cw.length;
+
+  if(style==='compact'){
+    const lines = [];
+    for(let i=0;i<data.length;i++){
+      if(i===0 && S.hasHeader){
+        // skip header row entirely for compact? No, compact just has no borders
+      }
+      const parts = [];
+      for(let c=0;c<cols;c++){
+        parts.push(padCell(data[i][c], cw[c], getAlign(c), pad));
+      }
+      lines.push(parts.join(''));
+    }
+    return lines.join('\n');
+  }
+
+  if(style==='simple'){
+    const lines = [];
+    for(let i=0;i<data.length;i++){
+      const parts = [];
+      for(let c=0;c<cols;c++){
+        parts.push(padCell(data[i][c], cw[c], getAlign(c), pad));
+      }
+      lines.push(parts.join('  '));
+      if(i===0 && S.hasHeader){
+        const sep = [];
+        for(let c=0;c<cols;c++) sep.push('-'.repeat(cw[c]+pad*2));
+        lines.push(sep.join('  '));
+      }
+      if(S.rowSep && i>0 && i<data.length-1 && !(i===0 && S.hasHeader)){
+        const sep = [];
+        for(let c=0;c<cols;c++) sep.push('-'.repeat(cw[c]+pad*2));
+        lines.push(sep.join('  '));
+      }
+    }
+    return lines.join('\n');
+  }
+
+  if(style==='markdown'){
+    const lines = [];
+    const mkRow = (row) => {
+      const parts = [];
+      for(let c=0;c<cols;c++) parts.push(padCell(row[c], cw[c], getAlign(c), pad));
+      return '|'+parts.join('|')+'|';
+    };
+    const startIdx = S.hasHeader ? 0 : -1;
+    if(S.hasHeader){
+      lines.push(mkRow(data[0]));
+      // Separator with alignment
+      const sep = [];
+      for(let c=0;c<cols;c++){
+        const a = getAlign(c);
+        const w = cw[c]+pad*2;
+        if(a==='center') sep.push(':'+'-'.repeat(Math.max(w-2,1))+':');
+        else if(a==='right') sep.push('-'.repeat(Math.max(w-1,1))+':');
+        else sep.push('-'.repeat(w));
+      }
+      lines.push('|'+sep.join('|')+'|');
+    }
+    const si = S.hasHeader?1:0;
+    for(let i=si;i<data.length;i++) lines.push(mkRow(data[i]));
+    return lines.join('\n');
+  }
+
+  // Grid / Unicode / Double / Rounded
+  const b = BORDERS[style];
+  const makeLine = (l,m,r,j) => {
+    const parts = [];
+    for(let c=0;c<cols;c++) parts.push(j.repeat(cw[c]+pad*2));
+    return l+parts.join(m)+r;
+  };
+  const makeRow = (row) => {
+    const parts = [];
+    for(let c=0;c<cols;c++) parts.push(padCell(row[c], cw[c], getAlign(c), pad));
+    return b.v+parts.join(b.v)+b.v;
+  };
+  const lines = [];
+  lines.push(makeLine(b.tl, b.mt, b.tr, b.h));
+  for(let i=0;i<data.length;i++){
+    lines.push(makeRow(data[i]));
+    if(i===0 && S.hasHeader){
+      lines.push(makeLine(b.ml, b.cross, b.mr, b.h));
+    } else if(S.rowSep && i<data.length-1){
+      lines.push(makeLine(b.ml, b.cross, b.mr, b.h));
+    }
+  }
+  lines.push(makeLine(b.bl, b.mb, b.br, b.h));
+  return lines.join('\n');
+}
+
+// ---- Spreadsheet ----
+const spreadsheet = document.getElementById('spreadsheet');
+let resizing = null;
+
+function buildSpreadsheet(){
+  const rows = S.data.length;
+  const cols = S.data[0]?S.data[0].length:0;
+  let html = '<tr><th class="corner"></th>';
+  for(let c=0;c<cols;c++){
+    const sortInd = S.sortCol===c ? (S.sortDir===1?' \u25B2':' \u25BC') : '';
+    html+=`<th class="col-header" data-col="${c}" style="min-width:${S.colWidths[c]||80}px">${colName(c)}${sortInd?'<span class="sort-ind">'+sortInd+'</span>':''}<div class="col-resize" data-col="${c}"></div></th>`;
+  }
+  html+='<th style="border:none;background:transparent;width:36px"><button class="add-col-btn" id="addColBtnInline" title="Add column">+</button></th></tr>';
+  for(let r=0;r<rows;r++){
+    html+=`<tr><th>${r+1}</th>`;
+    for(let c=0;c<cols;c++){
+      html+=`<td><input class="cell-input" data-r="${r}" data-c="${c}" value="${escHtml(S.data[r][c]||'')}"></td>`;
+    }
+    html+='<td style="border:none"></td></tr>';
+  }
+  // Add row button row
+  html+=`<tr><th style="border:none;background:transparent"></th>`;
+  for(let c=0;c<cols;c++) html+=`<td style="border:none;border-top:1px solid var(--border)"><button class="add-row-btn" id="addRowBtnInline" title="Add row" style="width:100%">+</button></td>`;
+  html+='<td style="border:none"></td></tr>';
+  spreadsheet.innerHTML = html;
+  buildColAlignRow();
+}
+
+function colName(i){
+  let n='';
+  i++;
+  while(i>0){n=String.fromCharCode(65+((i-1)%26))+n;i=Math.floor((i-1)/26);}
+  return n;
+}
+function escHtml(s){return s.replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+function buildColAlignRow(){
+  const row = document.getElementById('colAlignRow');
+  const cols = S.data[0]?S.data[0].length:0;
+  let html='<span style="font-size:.72rem;color:var(--text3);margin-right:4px">Align:</span>';
+  for(let c=0;c<cols;c++){
+    const a = S.colAligns[c]||'left';
+    html+=`<div class="col-align-chip"><span>${colName(c)}</span><select data-col="${c}"><option value="left"${a==='left'?' selected':''}>L</option><option value="center"${a==='center'?' selected':''}>C</option><option value="right"${a==='right'?' selected':''}>R</option></select></div>`;
+  }
+  row.innerHTML = html;
+  row.querySelectorAll('select').forEach(sel=>{
+    sel.addEventListener('change',()=>{
+      S.colAligns[+sel.dataset.col]=sel.value;
+      renderPreview();
+    });
+  });
+}
+
+// Event delegation for spreadsheet
+spreadsheet.addEventListener('input',(e)=>{
+  if(e.target.classList.contains('cell-input')){
+    const r=+e.target.dataset.r, c=+e.target.dataset.c;
+    S.data[r][c]=e.target.value;
+    renderPreview();
+  }
+});
+
+spreadsheet.addEventListener('keydown',(e)=>{
+  if(!e.target.classList.contains('cell-input')) return;
+  const r=+e.target.dataset.r, c=+e.target.dataset.c;
+  const rows=S.data.length, cols=S.data[0].length;
+  let nr=r, nc=c;
+  if(e.key==='Tab'){
+    e.preventDefault();
+    if(e.shiftKey){nc--;if(nc<0){nc=cols-1;nr--;}} else {nc++;if(nc>=cols){nc=0;nr++;}}
+  } else if(e.key==='Enter'){
+    e.preventDefault();
+    nr = e.shiftKey ? r-1 : r+1;
+  } else if(e.key==='ArrowDown'){ nr++; }
+  else if(e.key==='ArrowUp'){ nr--; }
+  else return;
+  if(nr>=0&&nr<rows&&nc>=0&&nc<cols){
+    const next=spreadsheet.querySelector(`input[data-r="${nr}"][data-c="${nc}"]`);
+    if(next){next.focus();next.select();}
+  }
+});
+
+spreadsheet.addEventListener('click',(e)=>{
+  // Column header sort
+  const th = e.target.closest('th.col-header');
+  if(th && !e.target.classList.contains('col-resize')){
+    const c=+th.dataset.col;
+    if(S.sortCol===c) S.sortDir*=-1;
+    else {S.sortCol=c;S.sortDir=1;}
+    buildSpreadsheet();
+    renderPreview();
+    return;
+  }
+  // Add col inline
+  if(e.target.id==='addColBtnInline'||e.target.closest('#addColBtnInline')){addCol();return;}
+  // Add row inline
+  if(e.target.classList.contains('add-row-btn')){addRow();return;}
+});
+
+// Column resize
+spreadsheet.addEventListener('mousedown',(e)=>{
+  if(!e.target.classList.contains('col-resize')) return;
+  const col=+e.target.dataset.col;
+  const th=e.target.parentElement;
+  const startX=e.clientX;
+  const startW=th.offsetWidth;
+  e.preventDefault();
+  const onMove=(ev)=>{
+    const w=Math.max(40, startW+(ev.clientX-startX));
+    th.style.minWidth=w+'px';
+    S.colWidths[col]=w;
+  };
+  const onUp=()=>{document.removeEventListener('mousemove',onMove);document.removeEventListener('mouseup',onUp);};
+  document.addEventListener('mousemove',onMove);
+  document.addEventListener('mouseup',onUp);
+});
+
+function addRow(){S.data.push(Array(S.data[0]?S.data[0].length:1).fill(''));buildSpreadsheet();renderPreview();}
+function addCol(){
+  S.data.forEach(r=>r.push(''));
+  S.colAligns.push('left');
+  buildSpreadsheet();renderPreview();
+}
+function delRow(){if(S.data.length>1){S.data.pop();buildSpreadsheet();renderPreview();}}
+function delCol(){
+  if(S.data[0]&&S.data[0].length>1){S.data.forEach(r=>r.pop());S.colAligns.pop();buildSpreadsheet();renderPreview();}
+}
+
+document.getElementById('addRowBtn').onclick=addRow;
+document.getElementById('addColBtn').onclick=addCol;
+document.getElementById('delRowBtn').onclick=delRow;
+document.getElementById('delColBtn').onclick=delCol;
+document.getElementById('clearBtn').onclick=()=>{
+  const cols=S.data[0]?S.data[0].length:3;
+  S.data=[Array(cols).fill('')];
+  S.sortCol=-1;
+  buildSpreadsheet();renderPreview();
+};
+document.getElementById('sampleBtn').onclick=()=>{
+  S.data=[['Name','Age','City','Score'],['Alice','30','New York','95.5'],['Bob','25','Los Angeles','87.2'],['Charlie','35','Chicago','91.8'],['Diana','28','Houston','78.4'],['Eve','32','Phoenix','88.9']];
+  S.colAligns=['left','right','left','right'];
+  S.sortCol=-1;
+  buildSpreadsheet();renderPreview();
+};
+
+// ---- Paste mode ----
+function detectDelimiter(text){
+  const lines = text.trim().split('\n').slice(0,5);
+  const counts = {'\t':0, ',':0, '|':0, ';':0};
+  for(const l of lines){
+    for(const d of Object.keys(counts)){
+      const n = (l.match(new RegExp(d==='|'?'\\|':d,'g'))||[]).length;
+      if(n>0) counts[d]+=n;
+    }
+  }
+  let best=null, bestN=0;
+  for(const [d,n] of Object.entries(counts)){if(n>bestN){bestN=n;best=d;}}
+  if(!best || bestN<lines.length){
+    // Try whitespace
+    const ws = lines.every(l=>/\s{2,}/.test(l));
+    if(ws) return 'whitespace';
+  }
+  return best||',';
+}
+
+function parsePasteData(text, delim){
+  const lines = text.trim().split('\n').filter(l=>l.trim());
+  if(delim==='whitespace'){
+    return lines.map(l=>l.trim().split(/\s{2,}|\t/));
+  }
+  return lines.map(l=>{
+    // Simple CSV parse (handles basic quoting)
+    const row=[];
+    let cur='', inQ=false;
+    for(let i=0;i<l.length;i++){
+      const ch=l[i];
+      if(inQ){
+        if(ch==='"'&&l[i+1]==='"'){cur+='"';i++;}
+        else if(ch==='"') inQ=false;
+        else cur+=ch;
+      } else {
+        if(ch==='"') inQ=true;
+        else if(ch===delim){row.push(cur.trim());cur='';}
+        else cur+=ch;
+      }
+    }
+    row.push(cur.trim());
+    return row;
+  });
+}
+
+document.getElementById('pasteInput').addEventListener('input',function(){
+  const text = this.value;
+  if(!text.trim()){document.getElementById('parsePreview').style.display='none';document.getElementById('delimInfo').textContent='';return;}
+  const delim = detectDelimiter(text);
+  const delimNames = {'\t':'Tab',',':'Comma','|':'Pipe',';':'Semicolon','whitespace':'Whitespace'};
+  document.getElementById('delimInfo').textContent='Detected: '+(delimNames[delim]||delim)+' delimiter';
+  const parsed = parsePasteData(text, delim);
+  const prev = document.getElementById('parsePreview');
+  prev.style.display='block';
+  const maxShow = Math.min(parsed.length, 5);
+  let html = `<div style="margin-bottom:6px;color:var(--accent);font-size:.72rem">${parsed.length} rows, ${parsed[0]?parsed[0].length:0} columns detected</div>`;
+  for(let i=0;i<maxShow;i++){
+    html+=`<div>${parsed[i].map(v=>`<span style="background:var(--surface2);padding:1px 6px;border-radius:3px;margin-right:4px;display:inline-block;margin-bottom:2px">${escHtml(v)}</span>`).join('')}</div>`;
+  }
+  if(parsed.length>5) html+='<div style="color:var(--text3)">...and '+(parsed.length-5)+' more rows</div>';
+  prev.innerHTML=html;
+});
+
+document.getElementById('parseBtn').onclick=()=>{
+  const text=document.getElementById('pasteInput').value;
+  if(!text.trim()) return;
+  const delim=detectDelimiter(text);
+  const parsed=parsePasteData(text,delim);
+  if(parsed.length){
+    S.data=parsed;
+    const cols=Math.max(...parsed.map(r=>r.length));
+    // Normalize
+    S.data.forEach(r=>{while(r.length<cols)r.push('');});
+    S.colAligns=Array(cols).fill('left');
+    S.sortCol=-1;
+    // Switch to spreadsheet
+    switchTab('spreadsheet');
+    buildSpreadsheet();renderPreview();
+  }
+};
+
+// ---- Markdown parse ----
+document.getElementById('parseMdBtn').onclick=()=>{
+  const text=document.getElementById('mdInput').value.trim();
+  if(!text) return;
+  const lines=text.split('\n').filter(l=>l.trim());
+  const parsed=[];
+  for(const l of lines){
+    const trimmed=l.trim();
+    // Skip separator lines
+    if(/^\|?[\s\-:|]+\|?$/.test(trimmed)) continue;
+    const cells=trimmed.replace(/^\|/,'').replace(/\|$/,'').split('|').map(c=>c.trim());
+    parsed.push(cells);
+  }
+  if(parsed.length){
+    S.data=parsed;
+    const cols=Math.max(...parsed.map(r=>r.length));
+    S.data.forEach(r=>{while(r.length<cols)r.push('');});
+    S.colAligns=Array(cols).fill('left');
+    S.sortCol=-1;
+    switchTab('spreadsheet');
+    buildSpreadsheet();renderPreview();
+  }
+};
+
+// ---- Tabs ----
+function switchTab(id){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.dataset.tab===id));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('panel'+id.charAt(0).toUpperCase()+id.slice(1)).classList.add('active');
+}
+document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>switchTab(t.dataset.tab)));
+
+// ---- Controls ----
+document.querySelectorAll('[data-pad]').forEach(btn=>btn.addEventListener('click',()=>{
+  document.querySelectorAll('[data-pad]').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  S.padding=+btn.dataset.pad;
+  renderPreview();
+}));
+
+function setupToggle(id, key){
+  const el=document.getElementById(id);
+  el.addEventListener('click',()=>{S[key]=!S[key];el.classList.toggle('on',S[key]);renderPreview();if(key==='rowNum')buildColAlignRow();});
+}
+setupToggle('toggleHeader','hasHeader');
+setupToggle('toggleRowSep','rowSep');
+setupToggle('toggleRowNum','rowNum');
+setupToggle('toggleDecimal','decimalAlign');
+
+document.getElementById('truncateMode').addEventListener('change',function(){S.truncateMode=this.value;renderPreview();});
+document.getElementById('truncateWidth').addEventListener('input',function(){S.truncateWidth=Math.max(5,+this.value||30);renderPreview();});
+
+// Preview mode
+document.querySelectorAll('[data-pmode]').forEach(btn=>btn.addEventListener('click',()=>{
+  document.querySelectorAll('[data-pmode]').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  S.previewMode=btn.dataset.pmode;
+  renderPreview();
+}));
+
+// ---- Preview rendering ----
+function renderPreview(){
+  const container = document.getElementById('previewContent');
+  const styles = S.previewMode==='all' ? STYLES : [S.singleStyle];
+  let html='';
+  if(S.previewMode==='single'){
+    html+='<div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:4px">';
+    for(const st of STYLES){
+      html+=`<button class="ctrl-btn${S.singleStyle===st?' active':''}" data-singst="${st}">${STYLE_NAMES[st]}</button>`;
+    }
+    html+='</div>';
+  }
+  for(const st of styles){
+    const output = renderStyle(st);
+    html+=`<div class="style-block"><div class="style-block-header"><span class="style-name">${STYLE_NAMES[st]}</span><button class="copy-btn" data-style="${st}">Copy</button></div><pre>${escHtml(output)}</pre></div>`;
+  }
+  container.innerHTML=html;
+  // Copy buttons
+  container.querySelectorAll('.copy-btn').forEach(btn=>btn.addEventListener('click',()=>{
+    const output=renderStyle(btn.dataset.style);
+    navigator.clipboard.writeText(output).then(()=>{
+      btn.textContent='Copied!';btn.classList.add('copied');
+      setTimeout(()=>{btn.textContent='Copy';btn.classList.remove('copied');},1500);
+    });
+  }));
+  // Single style buttons
+  container.querySelectorAll('[data-singst]').forEach(btn=>btn.addEventListener('click',()=>{
+    S.singleStyle=btn.dataset.singst;
+    renderPreview();
+  }));
+}
+
+// ---- Init ----
+buildSpreadsheet();
+renderPreview();
+
+})();
+</script>
+</body>
+</html>

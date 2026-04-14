@@ -1,0 +1,11 @@
+{
+  "name": "aski-art",
+  "version": "1.0.0",
+  "description": "ASCII art tools for developers",
+  "type": "module",
+  "bin": { "aski": "./bin/aski.js" },
+  "engines": { "node": ">=18" },
+  "files": ["bin", "src"],
+  "keywords": ["ascii", "ascii-art", "cli", "table", "diagram", "terminal"],
+  "license": "MIT"
+}
