@@ -27,6 +27,13 @@ const HELP = `${LOGO}
     interface   Generate TUI-style dashboard interfaces
     flow        Generate ASCII flowcharts
     wireframe   Generate ASCII UI wireframes
+    chart       Generate charts (sparkline, bar, line, histogram)
+    compose     Arrange multiple outputs side by side or in grids
+    border      Wrap text in decorative borders
+    canvas      Place elements on a spatial grid
+    draw        Quick shapes and art primitives
+    image       Convert images to ASCII art
+    art         Browse the ASCII art library
 
   Options:
     --help      Show help for a command
@@ -35,10 +42,12 @@ const HELP = `${LOGO}
   Examples:
     aski table --data "Name,Age;Alice,30;Bob,25"
     aski text "Hello" --font block
-    aski sequence --actors "A,B" --messages "A->B:hello"
-    aski interface --template server-status
-    aski flow --nodes "Start,End" --edges "Start->End"
-    aski wireframe --template login
+    aski chart --type sparkline --data "1,4,6,3,8,2,7" --label "CPU"
+    aski compose --horizontal --exec "aski table --data 'A,B;1,2'" --exec "aski art --name cat"
+    aski border --style rounded --title "Status" < output.txt
+    aski canvas --width 40 --height 10 --box "0,0,40,10,rounded,Hello"
+    aski draw --shape tree --data "Root;A;B;A>A1;A>A2"
+    aski art --name dragon
 
   Run \`aski <command> --help\` for detailed usage of each command.
 `;
@@ -53,7 +62,7 @@ async function main() {
   }
 
   if (command === '--version' || command === '-v') {
-    console.log('aski v1.0.0');
+    console.log('aski v2.0.0');
     return;
   }
 
@@ -88,6 +97,41 @@ async function main() {
     case 'wireframe': {
       const { wireframeCommand } = await import('../src/commands/wireframe.js');
       await wireframeCommand(subArgs);
+      break;
+    }
+    case 'chart': {
+      const { chartCommand } = await import('../src/commands/chart.js');
+      await chartCommand(subArgs);
+      break;
+    }
+    case 'compose': {
+      const { composeCommand } = await import('../src/commands/compose.js');
+      await composeCommand(subArgs);
+      break;
+    }
+    case 'border': {
+      const { borderCommand } = await import('../src/commands/border.js');
+      await borderCommand(subArgs);
+      break;
+    }
+    case 'canvas': {
+      const { canvasCommand } = await import('../src/commands/canvas.js');
+      await canvasCommand(subArgs);
+      break;
+    }
+    case 'draw': {
+      const { drawCommand } = await import('../src/commands/draw.js');
+      await drawCommand(subArgs);
+      break;
+    }
+    case 'image': {
+      const { imageCommand } = await import('../src/commands/image.js');
+      await imageCommand(subArgs);
+      break;
+    }
+    case 'art': {
+      const { artCommand } = await import('../src/commands/art.js');
+      await artCommand(subArgs);
       break;
     }
     default:

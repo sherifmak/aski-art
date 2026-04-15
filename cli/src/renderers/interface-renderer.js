@@ -39,6 +39,8 @@ function renderComponent(comp, width, b) {
     case 'statuslist': return renderStatusList(comp, width);
     case 'text': return renderTextBlock(comp, width);
     case 'badge': return renderBadge(comp, width);
+    case 'sparkline': return renderSparkline(comp, width);
+    case 'table': return renderTable(comp, width);
     default: return ['  Unknown component: ' + comp.type];
   }
 }
@@ -117,6 +119,44 @@ function renderBadge(comp, width) {
   return [`  ${badge}`];
 }
 
+function renderSparkline(comp, width) {
+  const label = comp.label || '';
+  const data = (comp.data || '').split(',').map(Number);
+  const blocks = ['▁', '▂', '▃', '▄', '▅', '▆', '▇', '█'];
+  const max = Math.max(...data);
+  const min = Math.min(...data);
+  const range = max - min || 1;
+  const spark = data.map(v => {
+    const idx = Math.round(((v - min) / range) * (blocks.length - 1));
+    return blocks[idx];
+  }).join('');
+  const prefix = label ? `${label}: ` : '';
+  return [`  ${prefix}${spark}`];
+}
+
+function renderTable(comp, width) {
+  const headers = (comp.headers || '').split('|');
+  const rows = (comp.rows || '').split(';').map(r => r.split('|'));
+
+  // Calculate column widths
+  const colWidths = headers.map((h, i) => {
+    const cellWidths = rows.map(r => (r[i] || '').length);
+    return Math.max(h.length, ...cellWidths);
+  });
+
+  const formatRow = (cells) => {
+    return '  ' + cells.map((c, i) => (c || '').padEnd(colWidths[i])).join('  ');
+  };
+
+  const lines = [];
+  lines.push(formatRow(headers));
+  lines.push('  ' + colWidths.map(w => '─'.repeat(w)).join('  '));
+  for (const row of rows) {
+    lines.push(formatRow(row));
+  }
+  return lines;
+}
+
 function parseItems(str) {
   return str.split(';')
     .filter(s => s.trim())
@@ -146,6 +186,8 @@ export function getTemplate(name, width = 60) {
     case 'deploy-log': return deployLogTemplate(width);
     case 'migration': return migrationTemplate(width);
     case 'api-response': return apiResponseTemplate(width);
+    case 'build-pipeline': return buildPipelineTemplate(width);
+    case 'monitoring': return monitoringTemplate(width);
     default: return null;
   }
 }
@@ -199,5 +241,30 @@ function apiResponseTemplate(width) {
     { type: 'kvlist', items: 'Content-Type|application/json;Cache-Control|max-age=3600;X-Request-Id|abc-123-def' },
     { type: 'divider' },
     { type: 'text', content: '{"users":[{"id":1,"name":"Alice"},{"id":2,"name":"Bob"}],"total":2,"page":1}' },
+  ];
+}
+
+function buildPipelineTemplate(width) {
+  return [
+    { type: 'header', text: 'BUILD PIPELINE' },
+    { type: 'divider' },
+    { type: 'progress', label: 'Build  ', value: '100', max: '100' },
+    { type: 'progress', label: 'Test   ', value: '100', max: '100' },
+    { type: 'progress', label: 'Lint   ', value: '100', max: '100' },
+    { type: 'progress', label: 'Deploy ', value: '65', max: '100' },
+    { type: 'divider' },
+    { type: 'kvlist', items: 'Branch|main;Commit|a3f2c1d;Duration|4m 12s;Triggered|push to main' },
+    { type: 'divider' },
+    { type: 'statuslist', items: '✓ 247 tests passed;✓ 0 tests failed;✓ Coverage: 87.4%;● Deploying to production...' },
+  ];
+}
+
+function monitoringTemplate(width) {
+  return [
+    { type: 'header', text: 'SERVICE MONITORING' },
+    { type: 'divider' },
+    { type: 'table', headers: 'Service|Status|p99|Trend', rows: 'api-gateway|● UP|42ms|▁▂▃▂▃▄▃▂▃▂▁▂;auth-service|● UP|18ms|▁▁▂▁▂▁▁▂▁▁▁▁;user-service|● UP|35ms|▂▃▄▃▄▅▃▄▃▂▃▂;payment-svc|▲ WARN|890ms|▃▅▇▆▇█▇▆▇▅▆▄;notification|● UP|22ms|▁▁▁▁▂▁▁▁▁▁▁▁' },
+    { type: 'divider' },
+    { type: 'kvlist', items: 'Error Rate|0.02%;Requests|14,827/min;Uptime|99.97%;Alerts|1 active (payment-svc latency)' },
   ];
 }
