@@ -9,11 +9,54 @@
 
 # Aski Art
 
-ASCII art tools for developers. A suite of web-based visual editors and a CLI tool for creating flowcharts, sequence diagrams, tables, wireframes, TUI dashboards, and more — all in ASCII.
+ASCII art tools for developers. Visual editors + CLI for creating flowcharts, sequence diagrams, tables, wireframes, TUI dashboards, and text banners — all in ASCII.
+
+**Live site:** [sherifmak.github.io/aski-art](https://sherifmak.github.io/aski-art)
+
+---
+
+## Install the Skill (Claude Code, Cursor, Windsurf, any AI coding agent)
+
+The skill teaches your AI coding agent how to generate ASCII art on demand. One command to install:
+
+### Claude Code
+
+```bash
+# Install the skill globally (works in any project)
+claude install-skill https://github.com/sherifmak/aski-art
+```
+
+Or manually: copy `skill/aski-art/` into your project's `.claude/skills/` directory or `~/.claude/skills/` for global access.
+
+### Cursor / Windsurf / Other Agents
+
+Copy the skill instructions into your agent's system prompt or rules file:
+
+1. Copy the contents of [`skill/aski-art/SKILL.md`](skill/aski-art/SKILL.md) into your `.cursorrules`, `.windsurfrules`, or equivalent config file
+2. Make sure `npx aski-art` is available (Node.js 18+ required)
+
+### Any Agent with Terminal Access
+
+If your coding agent can run shell commands, it can use aski. Just add this to its instructions/system prompt:
+
+```
+You have access to the `aski` CLI for generating ASCII art.
+Run commands with: npx aski-art <command> [options]
+
+Commands:
+- npx aski-art table --data "Name,Age;Alice,30" --style unicode
+- npx aski-art text "HELLO" --font block
+- npx aski-art sequence --actors "A,B" --messages "A->B:hello,B-->A:hi"
+- npx aski-art flow --nodes "Start(round),End(round)" --edges "Start->End"
+- npx aski-art interface --template server-status
+- npx aski-art wireframe --template login
+```
+
+---
 
 ## Web Tools
 
-Open `index.html` or visit the [live site](https://sherifmak.github.io/aski-art) to access all tools:
+Open `index.html` or visit the [live site](https://sherifmak.github.io/aski-art) to use the visual editors:
 
 | Tool | Description |
 |------|-------------|
@@ -24,95 +67,85 @@ Open `index.html` or visit the [live site](https://sherifmak.github.io/aski-art)
 | **Tables** | Paste CSV/TSV/Markdown → 7 table styles |
 | **Image Converter** | Drop an image → ASCII art with multiple character sets |
 
+---
+
 ## CLI
 
-Zero-dependency Node.js CLI for generating ASCII art from the terminal.
-
-### Install
+Zero-dependency Node.js CLI. Requires Node.js 18+.
 
 ```bash
-# Run directly with npx
+# Run directly with npx (no install needed)
 npx aski-art table --data "Name,Age;Alice,30;Bob,25"
 
 # Or install globally
 npm install -g aski-art
 ```
 
-### Commands
-
-#### Tables
+### Tables
 
 ```bash
 # Pipe CSV data
-echo "Name,Age,City\nAlice,30,NYC\nBob,25,LA" | aski table --style unicode
+echo "Name,Age,City\nAlice,30,NYC\nBob,25,LA" | npx aski-art table --style unicode
 
 # Inline data
-aski table --data "Status,Count;Active,142;Pending,7" --style rounded
+npx aski-art table --data "Status,Count;Active,142;Pending,7" --style rounded
 
 # JSON input
-echo '[{"name":"api-1","status":"up"}]' | aski table --json
+echo '[{"name":"api-1","status":"up"}]' | npx aski-art table --json
 ```
 
 Styles: `unicode` (default), `grid`, `double`, `rounded`, `simple`, `markdown`, `compact`
 
-#### Text Banners
+### Text Banners
 
 ```bash
-aski text "DEPLOY" --font block
-aski text "WARNING" --font shadow
+npx aski-art text "DEPLOY" --font block
+npx aski-art text "WARNING" --font shadow
 ```
 
 Fonts: `block` (default), `banner`, `mini`, `shadow`
 
-#### Sequence Diagrams
+### Sequence Diagrams
 
 ```bash
-aski sequence \
+npx aski-art sequence \
   --actors "Client,Server,DB" \
   --messages "Client->Server:GET /users,Server->DB:SELECT,DB-->Server:rows,Server-->Client:200 OK"
 ```
 
-Arrow types: `->` (solid), `-->` (dashed/return), `A->A` (self-call)
+Arrow types: `->` (solid), `-->` (dashed/return)
 
-#### Flowcharts
+### Flowcharts
 
 ```bash
-aski flow \
+npx aski-art flow \
   --nodes "Start(round),Validate(rect),OK?(diamond),Process(rect),End(round)" \
   --edges "Start->Validate,Validate->OK?,OK?->Process:yes,OK?->Start:no,Process->End"
 ```
 
 Node types: `rect` (default), `diamond`, `round`
 
-#### TUI Dashboards
+### TUI Dashboards
 
 ```bash
-# Use a template
-aski interface --template server-status
+npx aski-art interface --template server-status
 
-# Custom components
-aski interface --components "header:text=BUILD,progress:label=Tests:value=47:max=50"
+npx aski-art interface \
+  --components "header:text=BUILD,progress:label=Tests:value=47:max=50"
 ```
 
 Templates: `server-status`, `deploy-log`, `migration`, `api-response`
 
-#### Wireframes
+### Wireframes
 
 ```bash
-aski wireframe --template login
-aski wireframe --template dashboard
+npx aski-art wireframe --template login
+npx aski-art wireframe --template dashboard
 ```
 
 Templates: `dashboard`, `login`, `settings`, `landing`, `chat`
 
-## Claude Code Integration
-
-Add the skill to use ASCII art generation directly in Claude Code:
-
-```bash
-# From the aski-art directory, the skill is automatically available
-# Use /aski in Claude Code to generate ASCII art
-```
+---
 
 ## License
 
