@@ -1,0 +1,111 @@
+# Eval 02: OAuth2 Flow (v2 Re-evaluation)
+
+**Prompt:** "Draw a sequence diagram showing OAuth2 authorization code flow between Browser, App, AuthServer, and API"
+
+---
+
+## CLI v2 Version
+
+**Commands used:**
+```bash
+aski sequence --actors "Browser,App,AuthServer,API" \
+  --messages "Browser->App:click login,App->AuthServer:redirect /authorize,AuthServer->Browser:login page,Browser->AuthServer:credentials,AuthServer->App:auth code,App->AuthServer:POST /token,AuthServer-->App:access_token,App->API:GET /resource,API-->App:200 data,App-->Browser:dashboard"
+```
+
+**Output:**
+```
+        │ Browser │                  │ App │                │ AuthServer │                 │ API │
+             │                          │                          │                          │
+             │       click login        │                          │                          │
+             ───────────────────────────>                          │                          │
+             │                          │                          │                          │
+             │                          │   redirect /authorize    │                          │
+             │                          ───────────────────────────>                          │
+             │                          │                          │                          │
+             │                     login page                      │                          │
+             <──────────────────────────────────────────────────────                          │
+             │                          │                          │                          │
+             │                     credentials                     │                          │
+             ──────────────────────────────────────────────────────>                          │
+             │                          │                          │                          │
+             │                          │        auth code         │                          │
+             │                          <───────────────────────────                          │
+             │                          │                          │                          │
+             │                          │       POST /token        │                          │
+             │                          ───────────────────────────>                          │
+             │                          │                          │                          │
+             │                          │      access_token        │                          │
+             │                          < ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ──                          │
+             │                          │                          │                          │
+             │                          │                    GET /resource                    │
+             │                          ──────────────────────────────────────────────────────>
+             │                          │                          │                          │
+             │                          │                      200 data                       │
+             │                          < ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─
+             │                          │                          │                          │
+             │        dashboard         │                          │                          │
+             < ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ──                          │                          │
+             │                          │                          │                          │
+        │ Browser │                  │ App │                │ AuthServer │                 │ API │
+```
+
+## Freehand Version
+```
+  ╔══════════════════════════════════════════════════════════════════════════════╗
+  ║                    OAuth 2.0 Authorization Code Flow                        ║
+  ╚══════════════════════════════════════════════════════════════════════════════╝
+
+  ┌─────────┐          ┌─────────┐          ┌────────────┐          ┌─────────┐
+  │ Browser │          │   App   │          │ AuthServer │          │   API   │
+  └────┬────┘          └────┬────┘          └─────┬──────┘          └────┬────┘
+       │                    │                     │                      │
+       │  1. Click Login    │                     │                      │
+       │ ──────────────────>│                     │                      │
+       │                    │                     │                      │
+       │                    │  2. 302 Redirect    │                      │
+       │                    │  /authorize?        │                      │
+       │                    │  client_id=abc&     │                      │
+       │                    │  redirect_uri=...   │                      │
+       │                    │ ───────────────────>│                      │
+       │                    │                     │                      │
+       │  3. Login Page (HTML form)               │                      │
+       │ <────────────────────────────────────────│                      │
+       │                    │                     │                      │
+       │  4. POST credentials (username/pass)     │                      │
+       │ ────────────────────────────────────────>│                      │
+       │                    │                     │                      │
+       │                    │  5. Auth Code        │                      │
+       │                    │  ?code=xyz123       │                      │
+       │                    │ <───────────────────│                      │
+       │                    │                     │                      │
+       │                    │  6. POST /token     │                      │
+       │                    │  {code, secret}     │                      │
+       │                    │ ───────────────────>│                      │
+       │                    │                     │                      │
+       │                    │  7. {access_token,  │                      │
+       │                    │   refresh_token,    │                      │
+       │                    │   expires_in: 3600} │                      │
+       │                    │ <─ ─ ─ ─ ─ ─ ─ ─ ─ │                      │
+       │                    │                     │                      │
+       │                    │  8. GET /resource                          │
+       │                    │  Authorization: Bearer eyJ...              │
+       │                    │ ─────────────────────────────────────────>│
+       │                    │                     │                      │
+       │                    │  9. 200 OK {data}                         │
+       │                    │ <─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ │
+       │                    │                     │                      │
+       │  10. Dashboard     │                     │                      │
+       │ <─ ─ ─ ─ ─ ─ ─ ─ ─│                     │                      │
+       │                    │                     │                      │
+  ┌────┴────┐          ┌────┴────┐          ┌─────┴──────┐          ┌────┴────┐
+  │ Browser │          │   App   │          │ AuthServer │          │   API   │
+  └─────────┘          └─────────┘          └────────────┘          └─────────┘
+
+  Legend: ────> Synchronous request    ─ ─ ─> Asynchronous response
+```
+
+## Verdict
+**CLI v2:** 8/10 -- The sequence command produces a perfectly readable diagram with correct arrow directions, dashed lines for async responses, and proper actor lifelines. It handles the 4-actor layout well and the message labels are clearly positioned.
+**Freehand:** 9/10 -- Adds step numbering, protocol details (query parameters, Bearer token format, response payload structure), a legend, and boxed actor headers/footers. These details make it a reference document, not just a diagram.
+**Winner:** Freehand -- The extra protocol details (client_id, redirect_uri, Bearer token, refresh_token) make the freehand version genuinely educational. The CLI version is structurally correct but lacks depth.
+**v1->v2 improvement:** No change. The sequence command was already the CLI's best feature in v1. Still 8/10.
