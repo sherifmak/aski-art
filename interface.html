@@ -831,6 +831,12 @@ document.querySelectorAll('.tpl-btn').forEach(btn => {
   });
 });
 
+// Auto-load template from URL hash, e.g. #tpl=migration
+(function autoLoadFromHash(){
+  const m = location.hash.match(/tpl=([a-z]+)/);
+  if (m && TEMPLATES[m[1]]) { components = TEMPLATES[m[1]](); selectedId = null; render(); }
+})();
+
 // Click canvas background to deselect
 document.getElementById('canvas-container').addEventListener('click', e => {
   if (e.target === document.getElementById('canvas-container') || e.target === document.getElementById('canvas')) {

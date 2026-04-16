@@ -12,16 +12,21 @@ Aski Art started with a simple question: what if there was a Figma-quality tool 
 
 **1. A web app** — six visual editors at [sherifmak.github.io/aski-art](https://sherifmak.github.io/aski-art):
 
-```
-┌────────────────────────────────────────────────────────┐
-│  Flow Builder      → boxes + arrows, Figma-style       │
-│  Interface Builder → drag-and-drop TUI dashboards      │
-│  Sequence Diagrams → actor lifelines + messages        │
-│  Wireframes        → 20 UI components for mockups      │
-│  Tables            → 7 styles, paste CSV/TSV/Markdown  │
-│  Image Converter   → drop image → ASCII art            │
-└────────────────────────────────────────────────────────┘
-```
+![Aski Art hub landing](blog-images/screenshots/02-hub-full.png)
+
+Each tool is a real editor with drag-and-drop, live ASCII preview, and one-click copy to clipboard:
+
+![Interface Builder — drag-and-drop TUI dashboards](blog-images/screenshots/04-interface-builder.png)
+
+![Tables — paste data, pick from 7 styles](blog-images/screenshots/05-tables.png)
+
+![Flow Builder — Figma-style diagrams](blog-images/screenshots/03-flow-builder.png)
+
+![Wireframes — 20 UI components for quick mockups](blog-images/screenshots/06-wireframes.png)
+
+![Sequence Diagrams — actor lifelines and messages](blog-images/screenshots/07-sequence.png)
+
+![Image Converter — drop image to ASCII](blog-images/screenshots/08-image-converter.png)
 
 **2. A CLI** (`npx aski-art`) — 13 commands, zero dependencies:
 

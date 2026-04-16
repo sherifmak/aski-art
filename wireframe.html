@@ -1002,6 +1002,10 @@ function init() {
   initInteractions();
   drawGrid();
   renderOutput();
+
+  // Auto-load template from URL hash, e.g. #tpl=dashboard
+  const m = location.hash.match(/tpl=([a-z-]+)/);
+  if (m) loadTemplate(m[1]);
 }
 
 init();

@@ -774,6 +774,16 @@ document.getElementById('templates').addEventListener('change', e=>{
   render();
 });
 
+// Auto-load template from URL hash, e.g. #tpl=decision
+(function autoLoadFromHash(){
+  const m = location.hash.match(/tpl=([a-z]+)/);
+  if (m) {
+    const sel = document.getElementById('templates');
+    sel.value = m[1];
+    sel.dispatchEvent(new Event('change'));
+  }
+})();
+
 // ── Panel ──
 document.getElementById('btn-toggle-ascii').addEventListener('click', ()=>asciiPanel.classList.toggle('open'));
 document.getElementById('btn-close-panel').addEventListener('click', ()=>asciiPanel.classList.remove('open'));
