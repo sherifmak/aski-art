@@ -1,0 +1,97 @@
+# Eval 07: Fantasy Weather (3-Way Evaluation)
+
+**Prompt:** "Fantasy world weather report for Eldoria with regions and danger levels"
+
+---
+
+## A) CLI v2
+**Command:** `aski compose --vertical --exec "aski text 'ELDORIA' --font mini" --exec "aski table --data 'Region,Weather,Temp,Danger;Elvish Woods,Fog,72F,Low;Dragon Peaks,Fire Rain,1200F,EXTREME;Crystal Lake,Moonshine,45F,None;Shadow Realm,Void Storm,???,HIGH' --style rounded" --exec "aski chart --type bar --data 'Elvish,2;Dragon,10;Crystal,1;Shadow,8;Shire,1' --width 40 --title 'Danger Level'"`
+```
+|--\|   |>\ /--\|--\===| /\
+|-- |   |  ||  ||--/ |  /--\
+|--/|__ |>/ \--/| \ ===|/  \
+╭──────────────┬────────────┬───────┬─────────╮
+│ Region       │ Weather    │ Temp  │ Danger  │
+├──────────────┼────────────┼───────┼─────────┤
+│ Elvish Woods │ Fog        │ 72F   │ Low     │
+│ Dragon Peaks │ Fire Rain  │ 1200F │ EXTREME │
+│ Crystal Lake │ Moonshine  │ 45F   │ None    │
+│ Shadow Realm │ Void Storm │ ???   │ HIGH    │
+╰──────────────┴────────────┴───────┴─────────╯
+Danger Level
+Elvish   █████                         2
+Dragon   ███████████████████████████  10
+Crystal  ███                           1
+Shadow   ██████████████████████        8
+Shire    ███                           1
+```
+Score: 8/10
+
+## B) Freehand (no skill)
+```
+            ~~~ ELDORIA WEATHER REPORT ~~~
+
+  +-----------------+----------+--------+----------+
+  | Region          | Weather  | Temp   | Danger   |
+  +-----------------+----------+--------+----------+
+  | Elvish Woods    | Fog      | 72F    | Low      |
+  | Dragon Peaks    | Fire     | 1200F  | EXTREME  |
+  | Crystal Lake    | Moonshine| 45F    | None     |
+  | Shadow Realm    | Void     | ???    | HIGH     |
+  | Shire           | Sunny    | 68F    | None     |
+  +-----------------+----------+--------+----------+
+
+  Danger Level:
+    Elvish   ##                      2
+    Dragon   ##########             10
+    Crystal  #                       1
+    Shadow   ########                8
+    Shire    #                       1
+```
+Score: 7/10
+
+## C) Freehand + Skill
+```
+╔═══════════════════════════════════════════════════════════════════════════╗
+║   ✦  ·   ☽   ·     ✦       ·    ☼    ·       ✦      ·   ⋆    ·    ✦    ║
+║                                                                            ║
+║         ▓███▓ █     ▓███▓  ▓███▓ ▓███▓ ▓███▓ ▓███▓                       ║
+║         █     █     █   █  █   █ █   █ █     █   █                       ║
+║         ███   █     █   █  █   █ ████  █     █████                       ║
+║         █     █     █   █  █   █ █  █  █     █   █                       ║
+║         ▓███▓ █████ ▓███▓  ▓███▓ █   █ ▓███▓ █   █                       ║
+║                                                                            ║
+║      ╔══╡  R E A L M   W E A T H E R   F O R E C A S T  ╞══╗            ║
+║                                                                            ║
+║   ╭──────────────┬──────────────┬─────────┬──────────────╮              ║
+║   │  REGION      │  CONDITIONS  │  TEMP   │  DANGER      │              ║
+║   ├──────────────┼──────────────┼─────────┼──────────────┤              ║
+║   │ ⌇ Elvish Wd  │  ░ Fog       │  72°F   │  ◉ Low      │              ║
+║   │ ▲ Dragon Pks │  ✸ Fire Rain │ 1200°F  │  ☠ EXTREME  │              ║
+║   │ ◐ Crystal Lk │  ☽ Moonshine │  45°F   │  ○ None     │              ║
+║   │ ✦ Shadow Rlm │  ≋ Void Storm│   ???   │  ⚠ HIGH     │              ║
+║   │ ✿ The Shire  │  ☼ Sunny     │  68°F   │  ○ None     │              ║
+║   ╰──────────────┴──────────────┴─────────┴──────────────╯              ║
+║                                                                            ║
+║   ──── ✦ ──── DANGER LEVEL INDEX ──── ✦ ────                            ║
+║                                                                            ║
+║   Elvish   ▓▒░░░░░░░░░░░░░░░░░░░░░░░░░░    2/10  ◉ safe                ║
+║   Dragon   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓   10/10  ☠ avoid               ║
+║   Crystal  ▒░░░░░░░░░░░░░░░░░░░░░░░░░░░░    1/10  ○ peaceful           ║
+║   Shadow   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░░░░░    8/10  ⚠ hostile             ║
+║   Shire    ▒░░░░░░░░░░░░░░░░░░░░░░░░░░░░    1/10  ○ idyllic            ║
+║                                                                            ║
+║   ╔═══════════════════════════════════════════════════════════════╗      ║
+║   ║  ⚠ ADVISORY: Dragon Peaks has Class V firestorm activity.    ║      ║
+║   ║   The Council recommends rerouting caravans via Shire road.  ║      ║
+║   ║   Shadow Realm scrying remains unreliable. Use moonstones.   ║      ║
+║   ╚═══════════════════════════════════════════════════════════════╝      ║
+║                                                                            ║
+╠══════════════════════════════════════════════════════════════════════════╣
+║   Reported by:  ◐ Loremaster Vex   │   Updated: 3rd Moon, Year 1247    ║
+╚══════════════════════════════════════════════════════════════════════════╝
+```
+Score: 9/10
+
+## Verdict
+CLI v2 stitches together title + table + chart cleanly. Freehand reformats but is plainer. The skill-enhanced version adds: a starry frame with celestial bodies (☽ ☼), a glowing block-letter title with shadow gradient, ornamented section headers (╔══╡ ... ╞══╗), region icons (⌇ ▲ ◐ ✦ ✿), danger symbols (◉ ☠ ○ ⚠) replacing plain text, ░▒▓ gradient progress bars instead of single-character bars, an in-world advisory box with quest-relevant info, and a fantasy-styled footer with reporter and date. The world-building detail elevates this from a report to a piece of in-game flavor.
