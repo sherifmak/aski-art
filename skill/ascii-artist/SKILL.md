@@ -33,6 +33,30 @@ Before outputting any art, verify:
 - [ ] Is negative space intentional, not accidental?
 - [ ] Would a human look at this and be impressed?
 
+## Line Discipline (CRITICAL)
+
+The #1 source of ugly art is inconsistent line lengths and ragged margins. Follow these rules strictly:
+
+1. **Pick a total line width and NEVER deviate.** Every single line in the piece must be the exact same character count. Decide upfront (e.g., 70 chars) and pad every line to exactly that width.
+2. **Define your margin constants.** If using a border like `▓░`, the inner content starts at a fixed column (e.g., column 4) and ends at a fixed column (e.g., column 67). Every line uses the same left-margin and right-margin.
+3. **Pad content lines to fill.** After writing the content on a line, pad with spaces to reach the right border character. Example: if your line is `▓░  Hello` and total width is 70, pad with spaces until you hit position 68, then add `░▓`.
+4. **Verify by counting the first 3 lines and last 3 lines.** If they're not identical width, fix before outputting.
+5. **Use a mental template.** Think of every line as: `LEFT_BORDER + LEFT_PAD + CONTENT.padEnd(innerWidth) + RIGHT_PAD + RIGHT_BORDER`. This formula must be identical for every line.
+
+Bad (ragged):
+```
+▓░     Hello World                ░▓
+▓░       Goodbye               ░▓
+▓░  Misaligned                       ░▓
+```
+
+Good (disciplined):
+```
+▓░     Hello World                              ░▓
+▓░     Goodbye                                  ░▓
+▓░     Aligned                                  ░▓
+```
+
 ## Output Rules
 
 1. Always output art inside triple-backtick code fences
@@ -40,3 +64,4 @@ Before outputting any art, verify:
 3. Test alignment mentally — count characters per line for consistency
 4. Keep line lengths consistent within a piece (pad with spaces if needed)
 5. Never describe the art before showing it — lead with the visual
+6. Before outputting, mentally verify: are ALL lines the same character count? If not, fix it.
