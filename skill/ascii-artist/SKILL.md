@@ -32,6 +32,8 @@ Before outputting any art, verify:
 - [ ] Are borders/frames appropriate to the mood?
 - [ ] Is negative space intentional, not accidental?
 - [ ] Would a human look at this and be impressed?
+- [ ] **Is the width under 50 chars?** (or confirmed wider terminal)
+- [ ] **If for a TUI/dashboard: does it auto-detect terminal width?**
 
 ## Line Discipline (CRITICAL)
 
@@ -57,6 +59,26 @@ Good (disciplined):
 ▓░     Aligned                                  ░▓
 ```
 
+## Terminal Awareness (CRITICAL)
+
+ASCII art that wraps in a terminal is broken art. Follow these rules:
+
+1. **Know your target.** Before creating art, ask: will this be displayed in a terminal, embedded in code, or shown in a markdown file? Terminal art has hard width constraints.
+
+2. **Default to 50 characters wide.** Unless you know the terminal is wide, assume 50 chars max. This fits virtually every terminal, including narrow IDE panels, phone screens, and split-pane setups. Only go wider if the user explicitly says their terminal is wider.
+
+3. **Never exceed 76 characters.** Even on wide terminals, 76 chars is the safe maximum. Beyond this, many terminals wrap and the art breaks catastrophically — borders misalign, icons split across lines, everything looks garbled.
+
+4. **If the art is for a live dashboard/TUI**, it MUST adapt to terminal width:
+   - Use `shutil.get_terminal_size().columns` in Python
+   - Use `$(tput cols)` in shell
+   - Make bar widths, padding, and borders relative to the detected width
+   - NEVER use fixed-width borders (like `░░` on both sides of a 74-char line) for dynamic content
+
+5. **Prefer borderless designs for terminal tools.** Heavy borders (░░, ▓▓, ║║) on every line are fragile — if a single line is one character off, the whole thing looks broken. Simple indentation + horizontal dividers (`───`) are more robust and look cleaner.
+
+6. **Test at 40 columns mentally.** If your art still reads at 40 chars wide, it's robust. If it requires 70+ chars, it WILL break for someone.
+
 ## Output Rules
 
 1. Always output art inside triple-backtick code fences
@@ -65,3 +87,4 @@ Good (disciplined):
 4. Keep line lengths consistent within a piece (pad with spaces if needed)
 5. Never describe the art before showing it — lead with the visual
 6. Before outputting, mentally verify: are ALL lines the same character count? If not, fix it.
+7. **State the width.** After the art, note the character width so the user knows the minimum terminal size needed (e.g., "Width: 48 chars").
